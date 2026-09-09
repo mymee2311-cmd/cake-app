@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,64 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 
+const API_URL = 'http://localhost:3000';
+
 export default function HomeScreen({ onOwnerLogin }) {
+  const [products, setProducts] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/api/products`);
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Không thể lấy sản phẩm');
+      }
+
+      setProducts(result.data || []);
+    } catch (err) {
+      console.error('Lỗi lấy sản phẩm:', err);
+
+      setError(
+        'Không thể kết nối đến máy chủ. Hãy kiểm tra Backend.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const keyword = searchText.toLowerCase().trim();
+
+    if (!keyword) {
+      return true;
+    }
+
+    return (
+      product.name?.toLowerCase().includes(keyword) ||
+      product.description?.toLowerCase().includes(keyword) ||
+      product.category_name?.toLowerCase().includes(keyword)
+    );
+  });
+
+  const formatPrice = (price) => {
+    return Number(price).toLocaleString('vi-VN') + 'đ';
+  };
+
   return (
     <View style={styles.container}>
 
@@ -20,6 +75,7 @@ export default function HomeScreen({ onOwnerLogin }) {
 
         {/* ================= HEADER ================= */}
         <View style={styles.header}>
+
           <View>
             <Text style={styles.smallTitle}>
               Chào mừng đến với
@@ -38,11 +94,13 @@ export default function HomeScreen({ onOwnerLogin }) {
           >
             <Text style={styles.ownerIcon}>🔐</Text>
           </TouchableOpacity>
+
         </View>
 
 
         {/* ================= SEARCH ================= */}
         <View style={styles.searchBox}>
+
           <Text style={styles.searchIcon}>
             🔍
           </Text>
@@ -51,7 +109,10 @@ export default function HomeScreen({ onOwnerLogin }) {
             style={styles.searchInput}
             placeholder="Tìm kiếm bánh..."
             placeholderTextColor="#9BB8BE"
+            value={searchText}
+            onChangeText={setSearchText}
           />
+
         </View>
 
 
@@ -64,7 +125,7 @@ export default function HomeScreen({ onOwnerLogin }) {
           contentContainerStyle={styles.bannerScrollContent}
         >
 
-          {/* ---------- BANNER ---------- */}
+          {/* BANNER */}
           <View style={styles.banner}>
 
             <View style={styles.bannerText}>
@@ -76,6 +137,7 @@ export default function HomeScreen({ onOwnerLogin }) {
               <Text style={styles.bannerTitle}>
                 Made with love ♡
               </Text>
+
             </View>
 
             <Text style={styles.bannerCake}>
@@ -85,7 +147,7 @@ export default function HomeScreen({ onOwnerLogin }) {
           </View>
 
 
-          {/* ---------- SPECIAL OFFER ---------- */}
+          {/* SPECIAL OFFER */}
           <View style={styles.offer}>
 
             <View style={styles.offerContent}>
@@ -133,11 +195,7 @@ export default function HomeScreen({ onOwnerLogin }) {
           style={styles.categoryScroll}
         >
 
-          {/* CATEGORY 1 */}
-          <TouchableOpacity
-            style={styles.category}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.category}>
             <Text style={styles.categoryIcon}>
               🌰
             </Text>
@@ -148,11 +206,7 @@ export default function HomeScreen({ onOwnerLogin }) {
           </TouchableOpacity>
 
 
-          {/* CATEGORY 2 */}
-          <TouchableOpacity
-            style={styles.category}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.category}>
             <Text style={styles.categoryIcon}>
               🍪
             </Text>
@@ -163,11 +217,7 @@ export default function HomeScreen({ onOwnerLogin }) {
           </TouchableOpacity>
 
 
-          {/* CATEGORY 3 */}
-          <TouchableOpacity
-            style={styles.category}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.category}>
             <Text style={styles.categoryIcon}>
               🥐
             </Text>
@@ -178,11 +228,7 @@ export default function HomeScreen({ onOwnerLogin }) {
           </TouchableOpacity>
 
 
-          {/* CATEGORY 4 */}
-          <TouchableOpacity
-            style={styles.category}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.category}>
             <Text style={styles.categoryIcon}>
               🍰
             </Text>
@@ -209,83 +255,135 @@ export default function HomeScreen({ onOwnerLogin }) {
         </View>
 
 
+        {/* ================= LOADING ================= */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+
+            <ActivityIndicator
+              size="large"
+              color="#75B9C8"
+            />
+
+            <Text style={styles.loadingText}>
+              Đang tải sản phẩm...
+            </Text>
+
+          </View>
+        )}
+
+
+        {/* ================= ERROR ================= */}
+        {!loading && error !== '' && (
+          <View style={styles.errorContainer}>
+
+            <Text style={styles.errorIcon}>
+              ⚠️
+            </Text>
+
+            <Text style={styles.errorText}>
+              {error}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={fetchProducts}
+            >
+              <Text style={styles.retryText}>
+                Thử lại
+              </Text>
+            </TouchableOpacity>
+
+          </View>
+        )}
+
+
         {/* ================= PRODUCTS ================= */}
-        <View style={styles.productRow}>
+        {!loading && error === '' && (
 
-          {/* ---------- PRODUCT 1 ---------- */}
-          <TouchableOpacity
-            style={styles.productCard}
-            activeOpacity={0.8}
-          >
+          <View style={styles.productRow}>
 
-            <View style={styles.productImage}>
-              <Text style={styles.categoryIcon}>
-                🌰
-              </Text>
-            </View>
+            {filteredProducts.length === 0 ? (
 
-            <Text style={styles.productName}>
-              Bánh hạnh nhân
-            </Text>
+              <View style={styles.emptyContainer}>
 
-            <Text style={styles.productDescription}>
-              almond cookie
-            </Text>
-
-            <View style={styles.priceRow}>
-
-              <Text style={styles.price}>
-                135.000đ/1 hộp
-              </Text>
-
-              <View style={styles.addButton}>
-                <Text style={styles.addText}>
-                  +
+                <Text style={styles.emptyIcon}>
+                  🍰
                 </Text>
+
+                <Text style={styles.emptyText}>
+                  Không tìm thấy bánh phù hợp
+                </Text>
+
               </View>
 
-            </View>
+            ) : (
 
-          </TouchableOpacity>
+              filteredProducts.map((product) => (
+
+                <TouchableOpacity
+                  key={product.id}
+                  style={styles.productCard}
+                  activeOpacity={0.8}
+                >
+
+                  {/* IMAGE */}
+                  <View style={styles.productImage}>
+
+                    <Text style={styles.productEmoji}>
+                      {product.category_name?.includes('Cookies')
+                        ? '🍪'
+                        : product.category_name?.includes('chuối')
+                        ? '🍞'
+                        : product.category_name?.includes('Croissant')
+                        ? '🥐'
+                        : '🌰'}
+                    </Text>
+
+                  </View>
 
 
-          {/* ---------- PRODUCT 2 ---------- */}
-          <TouchableOpacity
-            style={styles.productCard}
-            activeOpacity={0.8}
-          >
+                  {/* NAME */}
+                  <Text
+                    style={styles.productName}
+                    numberOfLines={1}
+                  >
+                    {product.name}
+                  </Text>
 
-            <View style={styles.productImage}>
-              <Text style={styles.productEmoji}>
-                🍞
-              </Text>
-            </View>
 
-            <Text style={styles.productName}>
-              Bánh chuối
-            </Text>
+                  {/* DESCRIPTION */}
+                  <Text
+                    style={styles.productDescription}
+                    numberOfLines={1}
+                  >
+                    {product.description}
+                  </Text>
 
-            <Text style={styles.productDescription}>
-              Banana cake
-            </Text>
 
-            <View style={styles.priceRow}>
+                  {/* PRICE */}
+                  <View style={styles.priceRow}>
 
-              <Text style={styles.price}>
-                60.000đ/1 ổ
-              </Text>
+                    <Text style={styles.price}>
+                      {formatPrice(product.price)}
+                    </Text>
 
-              <View style={styles.addButton}>
-                <Text style={styles.addText}>
-                  +
-                </Text>
-              </View>
+                    <View style={styles.addButton}>
+                      <Text style={styles.addText}>
+                        +
+                      </Text>
+                    </View>
 
-            </View>
+                  </View>
 
-          </TouchableOpacity>
+                </TouchableOpacity>
 
-        </View>
+              ))
+
+            )}
+
+          </View>
+
+        )}
 
       </ScrollView>
 
@@ -359,21 +457,13 @@ export default function HomeScreen({ onOwnerLogin }) {
 }
 
 
-/* =====================================================
-   STYLES
-===================================================== */
 
 const styles = StyleSheet.create({
-
-  /* ================= CONTAINER ================= */
 
   container: {
     flex: 1,
     backgroundColor: '#F8FDFF',
   },
-
-
-  /* ================= CONTENT ================= */
 
   content: {
     paddingHorizontal: 20,
@@ -381,8 +471,6 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
-
-  /* ================= HEADER ================= */
 
   header: {
     flexDirection: 'row',
@@ -418,8 +506,6 @@ const styles = StyleSheet.create({
   },
 
 
-  /* ================= SEARCH ================= */
-
   searchBox: {
     height: 48,
     backgroundColor: '#FFFFFF',
@@ -443,9 +529,6 @@ const styles = StyleSheet.create({
     color: '#3F6670',
   },
 
-
-  /* ================= BANNER CAROUSEL ================= */
-
   bannerScroll: {
     marginBottom: 25,
   },
@@ -453,9 +536,6 @@ const styles = StyleSheet.create({
   bannerScrollContent: {
     gap: 12,
   },
-
-
-  /* ================= MAIN BANNER ================= */
 
   banner: {
     width: 320,
@@ -484,21 +564,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  bannerDescription: {
-    fontSize: 11,
-    lineHeight: 17,
-    color: '#648F98',
-    marginTop: 8,
-    paddingRight: 5,
-  },
-
   bannerCake: {
     fontSize: 65,
     marginLeft: 10,
   },
 
-
-  /* ================= OFFER ================= */
 
   offer: {
     width: 320,
@@ -603,6 +673,7 @@ const styles = StyleSheet.create({
 
   productRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 25,
   },
@@ -614,6 +685,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderColor: '#DDEFF3',
+    marginBottom: 14,
   },
 
   productImage: {
@@ -669,6 +741,73 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '600',
+  },
+
+
+  /* ================= LOADING ================= */
+
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+
+  loadingText: {
+    marginTop: 10,
+    fontSize: 13,
+    color: '#7D9FA7',
+  },
+
+
+  /* ================= ERROR ================= */
+
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 30,
+  },
+
+  errorIcon: {
+    fontSize: 35,
+  },
+
+  errorText: {
+    fontSize: 13,
+    color: '#7D9FA7',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+
+  retryButton: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: '#75B9C8',
+  },
+
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+
+  /* ================= EMPTY ================= */
+
+  emptyContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+
+  emptyIcon: {
+    fontSize: 40,
+  },
+
+  emptyText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#8AA9AF',
   },
 
 

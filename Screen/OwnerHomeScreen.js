@@ -17,7 +17,7 @@ export default function OwnerHomeScreen({
   onLogout,
 }) {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -35,7 +35,7 @@ export default function OwnerHomeScreen({
             onPress={onProfile}
             activeOpacity={0.8}
           >
-            <Text style={styles.avatarText}>👨‍🍳</Text>
+            <Text style={styles.avatarText}>👩‍🍳</Text>
           </TouchableOpacity>
         </View>
 
@@ -251,21 +251,8 @@ export default function OwnerHomeScreen({
             </Text>
           </View>
         </TouchableOpacity>
-
-        {/* LOGOUT */}
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={onLogout}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.logoutIcon}>↪</Text>
-          <Text style={styles.logoutText}>
-            Đăng xuất
-          </Text>
-        </TouchableOpacity>
-
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -318,7 +305,6 @@ const styles = StyleSheet.create({
     fontSize: 27,
   },
 
-  /* TITLE */
 
   titleSection: {
     marginBottom: 18,
@@ -545,34 +531,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#4D9B68',
-  },
-
-  /* LOGOUT */
-
-  logoutButton: {
-    height: 52,
-    borderRadius: 15,
-    backgroundColor: '#FFFFFF',
-
-    borderWidth: 1,
-    borderColor: '#D7EEF2',
-
-    marginTop: 15,
-
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  logoutIcon: {
-    fontSize: 20,
-    color: '#438A9C',
-    marginRight: 8,
-  },
-
-  logoutText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#438A9C',
   },
 });

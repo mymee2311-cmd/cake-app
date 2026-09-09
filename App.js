@@ -6,6 +6,7 @@ import LoginScreen from './Screen/LoginScreen';
 import HomeScreen from './Screen/HomeScreen';
 import ProfileScreen from './Screen/ProfileScreen';
 import OwnerHomeScreen from './Screen/OwnerHomeScreen';
+import EditProfileScreen from './Screen/EditProfileScreen';
 
 export default function App() {
   const [screen, setScreen] = useState('splash');
@@ -18,7 +19,6 @@ export default function App() {
     );
   }
 
-  // Home
   if (screen === 'home') {
     return (
       <HomeScreen
@@ -39,10 +39,19 @@ export default function App() {
   if (screen === 'ownerHome') {
     return (
       <OwnerHomeScreen
+        onProfile={() => setScreen('profile')}
         onLogout={() => setScreen('login')}
       />
     );
   }
-
+  if(screen === 'profile'){
+    return (
+      <ProfileScreen
+        onBack={() => setScreen('ownerHome')}
+        onEdit={() => {}}
+        onLogout={() => setScreen('login')}
+      />
+    );
+  }
   return <View />;
 }
