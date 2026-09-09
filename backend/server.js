@@ -8,10 +8,11 @@ app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '23112004My',
-  database: 'mee_bakery',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,
 });
 
 db.connect((err) => {
@@ -147,9 +148,8 @@ app.get('/api/products/featured', (req, res) => {
     });
   });
 });
+const PORT = process.env.PORT || 3000;
 
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server chạy tại http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server đang chạy trên port ${PORT}`);
 });
