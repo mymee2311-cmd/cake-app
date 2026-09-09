@@ -55,19 +55,19 @@ export default function ProfileScreen({
                     Thông tin cá nhân
                 </Text>
 
-                <View style={styles.inforCard}>
+                <View style={styles.infoCard}>
                     {/*NAME*/}
-                    <View style={styles.inforRow}>
-                        <View style={styles.inforIcon}>
+                    <View style={styles.infoRow}>
+                        <View style={styles.infoIcon}>
                               👤
                         </View>
 
                     <View style={styles.infoContent}>
-                        <Text style={styles.inforLabel}>
+                        <Text style={styles.infoLabel}>
                             Họ và tên
                         </Text>
 
-                        <Text style={styles.inforValue}>
+                        <Text style={styles.infoValue}>
                             Owner
                         </Text> 
                     </View>
@@ -170,7 +170,20 @@ export default function ProfileScreen({
             </TouchableOpacity>
 
             {/*===================== LOGOUT ===================*/}
-               </ScrollView>
+            <TouchableOpacity
+                style ={styles.LogoutButton}
+                onPress={onLogout}
+                activeOpacity ={0.8}
+            >
+                <Text style={styles.logoutIcon}>
+                     ↪
+                </Text>
+
+                <Text style ={styles.logoutText}>
+                    Đăng xuất
+                </Text>
+                </TouchableOpacity>
+            </ScrollView>
         </View>
         ); 
 }
