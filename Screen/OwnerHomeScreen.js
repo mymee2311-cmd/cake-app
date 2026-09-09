@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
 
 export default function OwnerHomeScreen({
@@ -17,246 +16,357 @@ export default function OwnerHomeScreen({
   onLogout,
 }) {
   return (
-    <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <View style={styles.container}>
 
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.welcome}>Xin chào 👋</Text>
-            <Text style={styles.ownerName}>Owner</Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+
+          {/* ================= HEADER ================= */}
+          <View style={styles.header}>
+
+            <View>
+              <Text style={styles.welcome}>
+                Xin chào 👋
+              </Text>
+
+              <Text style={styles.ownerName}>
+                My
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.avatar}
+              onPress={onProfile}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.avatarText}>
+                👩‍🍳
+              </Text>
+            </TouchableOpacity>
+
           </View>
 
-          <TouchableOpacity
-            style={styles.avatar}
-            onPress={onProfile}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.avatarText}>👩‍🍳</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/* TITLE */}
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>Tổng quan cửa hàng</Text>
-          <Text style={styles.subtitle}>
-            Quản lý Mee Bakery của bạn
+          {/* ================= TITLE ================= */}
+          <View style={styles.titleSection}>
+
+            <Text style={styles.title}>
+              Tổng quan cửa hàng
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Quản lý Mee Bakery của bạn
+            </Text>
+
+          </View>
+
+
+          {/* ================= STATISTICS ================= */}
+
+          <View style={styles.statsRow}>
+
+            <View style={styles.statCard}>
+
+              <View style={styles.statIcon}>
+                <Text>💰</Text>
+              </View>
+
+              <Text style={styles.statNumber}>
+                0đ
+              </Text>
+
+              <Text style={styles.statLabel}>
+                Doanh thu
+              </Text>
+
+            </View>
+
+
+            <View style={styles.statCard}>
+
+              <View style={styles.statIcon}>
+                <Text>📦</Text>
+              </View>
+
+              <Text style={styles.statNumber}>
+                2
+              </Text>
+
+              <Text style={styles.statLabel}>
+                Đơn hàng
+              </Text>
+
+            </View>
+
+          </View>
+
+
+          <View style={styles.statsRow}>
+
+            <View style={styles.statCard}>
+
+              <View style={styles.statIcon}>
+                <Text>🍰</Text>
+              </View>
+
+              <Text style={styles.statNumber}>
+                10
+              </Text>
+
+              <Text style={styles.statLabel}>
+                Sản phẩm
+              </Text>
+
+            </View>
+
+
+            <View style={styles.statCard}>
+
+              <View style={styles.statIcon}>
+                <Text>👥</Text>
+              </View>
+
+              <Text style={styles.statNumber}>
+                2
+              </Text>
+
+              <Text style={styles.statLabel}>
+                Khách hàng
+              </Text>
+
+            </View>
+
+          </View>
+
+
+          {/* ================= QUICK MANAGEMENT ================= */}
+
+          <Text style={styles.sectionTitle}>
+            Quản lý cửa hàng
           </Text>
-        </View>
 
-        {/* STATISTICS */}
-        <View style={styles.statsRow}>
 
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Text>💰</Text>
-            </View>
+          <View style={styles.managementGrid}>
 
-            <Text style={styles.statNumber}>0đ</Text>
-            <Text style={styles.statLabel}>Doanh thu</Text>
+            {/* PRODUCTS */}
+            <TouchableOpacity
+              style={styles.managementCard}
+              onPress={onProducts}
+              activeOpacity={0.8}
+            >
+
+              <View style={styles.managementIcon}>
+                <Text style={styles.iconText}>
+                  🍰
+                </Text>
+              </View>
+
+              <Text style={styles.managementTitle}>
+                Sản phẩm
+              </Text>
+
+              <Text style={styles.managementDescription}>
+                Quản lý bánh
+              </Text>
+
+            </TouchableOpacity>
+
+
+            {/* ORDERS */}
+            <TouchableOpacity
+              style={styles.managementCard}
+              onPress={onOrders}
+              activeOpacity={0.8}
+            >
+
+              <View style={styles.managementIcon}>
+                <Text style={styles.iconText}>
+                  📦
+                </Text>
+              </View>
+
+              <Text style={styles.managementTitle}>
+                Đơn hàng
+              </Text>
+
+              <Text style={styles.managementDescription}>
+                Quản lý đơn
+              </Text>
+
+            </TouchableOpacity>
+
+
+            {/* CATEGORIES */}
+            <TouchableOpacity
+              style={styles.managementCard}
+              onPress={onCategories}
+              activeOpacity={0.8}
+            >
+
+              <View style={styles.managementIcon}>
+                <Text style={styles.iconText}>
+                  🏷️
+                </Text>
+              </View>
+
+              <Text style={styles.managementTitle}>
+                Danh mục
+              </Text>
+
+              <Text style={styles.managementDescription}>
+                Phân loại bánh
+              </Text>
+
+            </TouchableOpacity>
+
+
+            {/* PROMOTIONS */}
+            <TouchableOpacity
+              style={styles.managementCard}
+              onPress={onPromotions}
+              activeOpacity={0.8}
+            >
+
+              <View style={styles.managementIcon}>
+                <Text style={styles.iconText}>
+                  🎁
+                </Text>
+              </View>
+
+              <Text style={styles.managementTitle}>
+                Khuyến mãi
+              </Text>
+
+              <Text style={styles.managementDescription}>
+                Mã giảm giá
+              </Text>
+
+            </TouchableOpacity>
+
           </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Text>📦</Text>
-            </View>
 
-            <Text style={styles.statNumber}>2</Text>
-            <Text style={styles.statLabel}>Đơn hàng</Text>
-          </View>
+          {/* ================= NEW ORDERS ================= */}
 
-        </View>
+          <View style={styles.sectionHeader}>
 
-        <View style={styles.statsRow}>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Text>🍰</Text>
-            </View>
-
-            <Text style={styles.statNumber}>10</Text>
-            <Text style={styles.statLabel}>Sản phẩm</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Text>👥</Text>
-            </View>
-
-            <Text style={styles.statNumber}>2</Text>
-            <Text style={styles.statLabel}>Khách hàng</Text>
-          </View>
-
-        </View>
-
-        {/* QUICK MANAGEMENT */}
-        <Text style={styles.sectionTitle}>Quản lý cửa hàng</Text>
-
-        <View style={styles.managementGrid}>
-
-          {/* PRODUCTS */}
-          <TouchableOpacity
-            style={styles.managementCard}
-            onPress={onProducts}
-            activeOpacity={0.8}
-          >
-            <View style={styles.managementIcon}>
-              <Text style={styles.iconText}>🍰</Text>
-            </View>
-
-            <Text style={styles.managementTitle}>
-              Sản phẩm
+            <Text style={styles.sectionTitle}>
+              Đơn hàng mới
             </Text>
 
-            <Text style={styles.managementDescription}>
-              Quản lý bánh
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={onOrders}>
+              <Text style={styles.viewAll}>
+                Xem tất cả
+              </Text>
+            </TouchableOpacity>
 
-          {/* ORDERS */}
+          </View>
+
+
+          {/* ================= ORDER 1 ================= */}
+
           <TouchableOpacity
-            style={styles.managementCard}
+            style={styles.orderCard}
             onPress={onOrders}
             activeOpacity={0.8}
           >
-            <View style={styles.managementIcon}>
-              <Text style={styles.iconText}>📦</Text>
-            </View>
 
-            <Text style={styles.managementTitle}>
-              Đơn hàng
-            </Text>
+            <View style={styles.orderLeft}>
 
-            <Text style={styles.managementDescription}>
-              Quản lý đơn
-            </Text>
-          </TouchableOpacity>
+              <View style={styles.orderIcon}>
+                <Text>🧁</Text>
+              </View>
 
-          {/* CATEGORIES */}
-          <TouchableOpacity
-            style={styles.managementCard}
-            onPress={onCategories}
-            activeOpacity={0.8}
-          >
-            <View style={styles.managementIcon}>
-              <Text style={styles.iconText}>🏷️</Text>
-            </View>
+              <View>
 
-            <Text style={styles.managementTitle}>
-              Danh mục
-            </Text>
+                <Text style={styles.orderName}>
+                  Đơn hàng #001
+                </Text>
 
-            <Text style={styles.managementDescription}>
-              Phân loại bánh
-            </Text>
-          </TouchableOpacity>
-
-          {/* PROMOTIONS */}
-          <TouchableOpacity
-            style={styles.managementCard}
-            onPress={onPromotions}
-            activeOpacity={0.8}
-          >
-            <View style={styles.managementIcon}>
-              <Text style={styles.iconText}>🎁</Text>
-            </View>
-
-            <Text style={styles.managementTitle}>
-              Khuyến mãi
-            </Text>
-
-            <Text style={styles.managementDescription}>
-              Mã giảm giá
-            </Text>
-          </TouchableOpacity>
-
-        </View>
-
-        {/* NEW ORDERS */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Đơn hàng mới
-          </Text>
-
-          <TouchableOpacity onPress={onOrders}>
-            <Text style={styles.viewAll}>Xem tất cả</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* ORDER 1 */}
-        <TouchableOpacity
-          style={styles.orderCard}
-          onPress={onOrders}
-          activeOpacity={0.8}
-        >
-          <View style={styles.orderLeft}>
-            <View style={styles.orderIcon}>
-              <Text>🧁</Text>
-            </View>
-
-            <View>
-              <Text style={styles.orderName}>
-                Đơn hàng #001
-              </Text>
-
-              <Text style={styles.orderCustomer}>
+                <Text style={styles.orderCustomer}>
                   My
-              </Text>
+                </Text>
 
-              <Text style={styles.orderPrice}>
-                215.000đ
-              </Text>
-            </View>
-          </View>
+                <Text style={styles.orderPrice}>
+                  215.000đ
+                </Text>
 
-          <View style={styles.pendingBadge}>
-            <Text style={styles.pendingText}>
-              Chờ xác nhận
-            </Text>
-          </View>
-        </TouchableOpacity>
+              </View>
 
-        {/* ORDER 2 */}
-        <TouchableOpacity
-          style={styles.orderCard}
-          onPress={onOrders}
-          activeOpacity={0.8}
-        >
-          <View style={styles.orderLeft}>
-            <View style={styles.orderIcon}>
-              <Text>🍪</Text>
             </View>
 
-            <View>
-              <Text style={styles.orderName}>
-                Đơn hàng #002
-              </Text>
 
-              <Text style={styles.orderCustomer}>
-                H
-              </Text>
-
-              <Text style={styles.orderPrice}>
-                155.000đ
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingText}>
+                Chờ xác nhận
               </Text>
             </View>
-          </View>
 
-          <View style={styles.confirmedBadge}>
-            <Text style={styles.confirmedText}>
-              Đã xác nhận
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+          </TouchableOpacity>
+
+
+          {/* ================= ORDER 2 ================= */}
+
+          <TouchableOpacity
+            style={styles.orderCard}
+            onPress={onOrders}
+            activeOpacity={0.8}
+          >
+
+            <View style={styles.orderLeft}>
+
+              <View style={styles.orderIcon}>
+                <Text>🍪</Text>
+              </View>
+
+              <View>
+
+                <Text style={styles.orderName}>
+                  Đơn hàng #002
+                </Text>
+
+                <Text style={styles.orderCustomer}>
+                  H
+                </Text>
+
+                <Text style={styles.orderPrice}>
+                  155.000đ
+                </Text>
+
+              </View>
+
+            </View>
+
+
+            <View style={styles.confirmedBadge}>
+              <Text style={styles.confirmedText}>
+                Đã xác nhận
+              </Text>
+            </View>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </View>
   );
 }
 
+
 const styles = StyleSheet.create({
+
+  /* ================= SAFE AREA ================= */
+
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#EAF8FB',
+  },
+
+
+  /* ================= CONTAINER ================= */
+
   container: {
     flex: 1,
     backgroundColor: '#EAF8FB',
@@ -267,33 +377,36 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
 
-  /* HEADER */
+
+  /* ================= HEADER ================= */
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingTop: 35,
+    paddingBottom: 30,
   },
 
   welcome: {
     fontSize: 14,
     color: '#6B969E',
-    marginBottom: 3,
+    marginBottom: 2,
   },
 
   ownerName: {
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: '800',
     color: '#438A9C',
   },
 
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+
     backgroundColor: '#FFFFFF',
+
     justifyContent: 'center',
     alignItems: 'center',
 
@@ -302,9 +415,11 @@ const styles = StyleSheet.create({
   },
 
   avatarText: {
-    fontSize: 27,
+    fontSize: 25,
   },
 
+
+  /* ================= TITLE ================= */
 
   titleSection: {
     marginBottom: 18,
@@ -322,7 +437,8 @@ const styles = StyleSheet.create({
     color: '#7B9EA5',
   },
 
-  /* STATISTICS */
+
+  /* ================= STATISTICS ================= */
 
   statsRow: {
     flexDirection: 'row',
@@ -332,18 +448,23 @@ const styles = StyleSheet.create({
 
   statCard: {
     flex: 1,
+
     backgroundColor: '#FFFFFF',
+
     borderRadius: 18,
+
     padding: 15,
 
     borderWidth: 1,
     borderColor: '#D7EEF2',
 
     shadowColor: '#75AEB9',
+
     shadowOffset: {
       width: 0,
       height: 3,
     },
+
     shadowOpacity: 0.08,
     shadowRadius: 6,
 
@@ -353,10 +474,14 @@ const styles = StyleSheet.create({
   statIcon: {
     width: 38,
     height: 38,
+
     borderRadius: 12,
+
     backgroundColor: '#E8F7FA',
+
     justifyContent: 'center',
     alignItems: 'center',
+
     marginBottom: 10,
   },
 
@@ -372,12 +497,15 @@ const styles = StyleSheet.create({
     color: '#7C9BA1',
   },
 
-  /* MANAGEMENT */
+
+  /* ================= MANAGEMENT ================= */
 
   sectionTitle: {
     fontSize: 19,
     fontWeight: '800',
+
     color: '#356F7C',
+
     marginTop: 18,
     marginBottom: 13,
   },
@@ -390,18 +518,23 @@ const styles = StyleSheet.create({
 
   managementCard: {
     width: '48%',
+
     backgroundColor: '#FFFFFF',
+
     borderRadius: 18,
+
     padding: 17,
 
     borderWidth: 1,
     borderColor: '#D7EEF2',
 
     shadowColor: '#75AEB9',
+
     shadowOffset: {
       width: 0,
       height: 3,
     },
+
     shadowOpacity: 0.08,
     shadowRadius: 6,
 
@@ -411,10 +544,14 @@ const styles = StyleSheet.create({
   managementIcon: {
     width: 48,
     height: 48,
+
     borderRadius: 15,
+
     backgroundColor: '#E8F7FA',
+
     justifyContent: 'center',
     alignItems: 'center',
+
     marginBottom: 12,
   },
 
@@ -434,7 +571,8 @@ const styles = StyleSheet.create({
     color: '#89A5AA',
   },
 
-  /* ORDERS */
+
+  /* ================= ORDERS ================= */
 
   sectionHeader: {
     flexDirection: 'row',
@@ -450,11 +588,14 @@ const styles = StyleSheet.create({
 
   orderCard: {
     backgroundColor: '#FFFFFF',
+
     borderRadius: 18,
+
     padding: 15,
     marginBottom: 12,
 
     flexDirection: 'row',
+
     justifyContent: 'space-between',
     alignItems: 'center',
 
@@ -462,10 +603,12 @@ const styles = StyleSheet.create({
     borderColor: '#D7EEF2',
 
     shadowColor: '#75AEB9',
+
     shadowOffset: {
       width: 0,
       height: 3,
     },
+
     shadowOpacity: 0.08,
     shadowRadius: 6,
 
@@ -481,10 +624,14 @@ const styles = StyleSheet.create({
   orderIcon: {
     width: 48,
     height: 48,
+
     borderRadius: 14,
+
     backgroundColor: '#E8F7FA',
+
     justifyContent: 'center',
     alignItems: 'center',
+
     marginRight: 12,
   },
 
@@ -507,10 +654,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+
+  /* ================= PENDING ================= */
+
   pendingBadge: {
     backgroundColor: '#FFF3D8',
+
     paddingHorizontal: 9,
     paddingVertical: 6,
+
     borderRadius: 10,
   },
 
@@ -520,10 +672,15 @@ const styles = StyleSheet.create({
     color: '#C28A32',
   },
 
+
+  /* ================= CONFIRMED ================= */
+
   confirmedBadge: {
     backgroundColor: '#E3F7EA',
+
     paddingHorizontal: 9,
     paddingVertical: 6,
+
     borderRadius: 10,
   },
 
@@ -532,4 +689,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#4D9B68',
   },
+
 });

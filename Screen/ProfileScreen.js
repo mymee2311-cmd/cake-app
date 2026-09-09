@@ -50,7 +50,7 @@ export default function ProfileScreen({
                     </View>
 
                     <Text style={styles.name}>
-                        Owner
+                        My
                     </Text>
 
                     <Text style={styles.role}>
@@ -81,7 +81,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                Owner
+                                Nguyễn Dương Hà My
                             </Text>
 
                         </View>
@@ -106,7 +106,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                xxxxxxxxxx
+                                08********
                             </Text>
 
                         </View>
@@ -131,7 +131,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                owner@meebakery.com
+                                mymee23.11@gmail.com
                             </Text>
 
                         </View>
@@ -258,13 +258,14 @@ const styles = StyleSheet.create({
 
     header: {
         height: 65,
+        paddingTop: 44,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
     },
 
     backButton: {
-        width: 42,
+        width: 45,
         height: 42,
         borderRadius: 13,
         backgroundColor: "#FFFFFF",
