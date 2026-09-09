@@ -160,7 +160,7 @@ export default function HomeScreen({ onOwnerLogin }) {
               </Text>
 
               <Text style={styles.offerCode}>
-                MEE10
+                MEE23
               </Text>
 
             </View>
