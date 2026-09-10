@@ -11,6 +11,7 @@ export default function ProfileScreen({
     onBack,
     onEdit,
     onLogout,
+    userInfo,
 }) {
     return (
         <View style={styles.container}>
@@ -81,7 +82,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                Nguyễn Dương Hà My
+                                 {userInfo.name}
                             </Text>
 
                         </View>
@@ -106,7 +107,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                08********
+                                {userInfo.phone}
                             </Text>
 
                         </View>
@@ -131,7 +132,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                mymee23.11@gmail.com
+                                {userInfo.mail}
                             </Text>
 
                         </View>
@@ -187,7 +188,7 @@ export default function ProfileScreen({
                             </Text>
 
                             <Text style={styles.infoValue}>
-                                Văn Quán, Hà Nội
+                                {userInfo.address}
                             </Text>
 
                         </View>

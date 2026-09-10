@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-const API_URL = 'http://192.168.1.187:3000';
+const API_URL = 'https://existence-summaries-sao-clerk.trycloudflare.com';
 export default function HomeScreen({ onOwnerLogin }) {
   const [products, setProducts] = useState([]);
   const [searchText, setSearchText] = useState('');

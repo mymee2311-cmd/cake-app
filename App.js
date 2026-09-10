@@ -11,6 +11,15 @@ import EditProfileScreen from './Screen/EditProfileScreen';
 export default function App() {
   const [screen, setScreen] = useState('splash');
 
+  // Thông tin người dùng
+  const [userInfo, setUserInfo] = useState({
+    name: '',
+    phone: '',
+    mail: '',
+    address: '',
+  });
+
+  // ================= SPLASH =================
   if (screen === 'splash') {
     return (
       <SplashScreen
@@ -19,6 +28,7 @@ export default function App() {
     );
   }
 
+  // ================= HOME =================
   if (screen === 'home') {
     return (
       <HomeScreen
@@ -27,6 +37,7 @@ export default function App() {
     );
   }
 
+  // ================= LOGIN =================
   if (screen === 'login') {
     return (
       <LoginScreen
@@ -36,6 +47,7 @@ export default function App() {
     );
   }
 
+  // ================= OWNER HOME =================
   if (screen === 'ownerHome') {
     return (
       <OwnerHomeScreen
@@ -44,14 +56,32 @@ export default function App() {
       />
     );
   }
-  if(screen === 'profile'){
+
+  // ================= PROFILE =================
+  if (screen === 'profile') {
     return (
       <ProfileScreen
+        userInfo={userInfo}
         onBack={() => setScreen('ownerHome')}
-        onEdit={() => {}}
+        onEdit={() => setScreen('editProfile')}
         onLogout={() => setScreen('login')}
       />
     );
   }
+
+  // ================= EDIT PROFILE =================
+  if (screen === 'editProfile') {
+    return (
+      <EditProfileScreen
+        userInfo={userInfo}
+        onBack={() => setScreen('profile')}
+        onSave={(newInfo) => {
+          setUserInfo(newInfo);
+          setScreen('profile');
+        }}
+      />
+    );
+  }
+
   return <View />;
 }
