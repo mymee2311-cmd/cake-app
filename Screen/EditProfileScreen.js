@@ -147,7 +147,7 @@ export default function EditProfileScreen({
 
 const styles = StyleSheet.create({
 
-  // ================= CONTAINER =================
+  
 
   container: {
     flex: 1,
@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
   },
 
 
-  // ================= HEADER =================
 
   header: {
     height: 100,
@@ -197,17 +196,12 @@ const styles = StyleSheet.create({
     width: 45,
   },
 
-
-  // ================= CONTENT =================
-
   content: {
     paddingHorizontal: 25,
     paddingTop: 20,
     paddingBottom: 40,
   },
 
-
-  // ================= INPUT =================
 
   inputGroup: {
     marginBottom: 20,
@@ -241,9 +235,6 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     textAlignVertical: 'top',
   },
-
-
-  // ================= SAVE BUTTON =================
 
   saveButton: {
     height: 52,

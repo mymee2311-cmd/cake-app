@@ -11,7 +11,7 @@ import EditProfileScreen from './Screen/EditProfileScreen';
 export default function App() {
   const [screen, setScreen] = useState('splash');
 
-  // Thông tin người dùng
+ 
   const [userInfo, setUserInfo] = useState({
     name: '',
     phone: '',
@@ -19,7 +19,6 @@ export default function App() {
     address: '',
   });
 
-  // ================= SPLASH =================
   if (screen === 'splash') {
     return (
       <SplashScreen
@@ -28,7 +27,6 @@ export default function App() {
     );
   }
 
-  // ================= HOME =================
   if (screen === 'home') {
     return (
       <HomeScreen
@@ -37,7 +35,7 @@ export default function App() {
     );
   }
 
-  // ================= LOGIN =================
+ 
   if (screen === 'login') {
     return (
       <LoginScreen
@@ -46,8 +44,6 @@ export default function App() {
       />
     );
   }
-
-  // ================= OWNER HOME =================
   if (screen === 'ownerHome') {
     return (
       <OwnerHomeScreen
@@ -56,8 +52,6 @@ export default function App() {
       />
     );
   }
-
-  // ================= PROFILE =================
   if (screen === 'profile') {
     return (
       <ProfileScreen
@@ -68,8 +62,6 @@ export default function App() {
       />
     );
   }
-
-  // ================= EDIT PROFILE =================
   if (screen === 'editProfile') {
     return (
       <EditProfileScreen
