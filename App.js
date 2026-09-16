@@ -11,6 +11,8 @@ import CheckOutScreen from './Screen/CheckOutScreen';
 import CartScreen from './Screen/CartScreen';
 import OrderHistoryScreen from './Screen/OrderHistoryScreen';
 import OrderSuccessScreen from './Screen/OrderSuccessScreen';
+import OwnerProductManagementScreen from './Screen/OwnerProductManagementScreen';
+import FavoriteScreen from './Screen/FavoriteScreen';
 
 export default function App() {
   const [screen, setScreen] = useState('splash');
@@ -23,8 +25,9 @@ export default function App() {
   });
 
   const [cart, setCart] = useState([]);
-  const [orders, setOrders] = useState([]);         
- const [lastOrder, setLastOrder] = useState(null);  
+  const [orders, setOrders] = useState([]);
+  const [lastOrder, setLastOrder] = useState(null);
+  const [favorites, setFavorites] = useState([]);       // ⭐ THÊM
 
   /* ================= CART HANDLERS ================= */
 
@@ -66,7 +69,24 @@ export default function App() {
     setCart([]);
   };
 
+
+  const handleToggleFavorite = (product) => {
+    setFavorites((prev) => {
+      const found = prev.find((p) => p.id === product.id);
+
+      if (found) {
+        return prev.filter((p) => p.id !== product.id);
+      }
+      return [...prev, product];
+    });
+  };
+
+  const handleRemoveFavorite = (productId) => {
+    setFavorites((prev) => prev.filter((p) => p.id !== productId));
+  };
+
   /* ================= NAVIGATION ================= */
+
   if (screen === 'splash') {
     return <SplashScreen onFinish={() => setScreen('home')} />;
   }
@@ -78,7 +98,10 @@ export default function App() {
         cart={cart}
         onAddToCart={handleAddToCart}
         onGoToCheckout={() => setScreen('cart')}
-        onGoToOrders={() => setScreen('orderHistory')}   
+        onGoToOrders={() => setScreen('orderHistory')}
+        onGoToFavorites={() => setScreen('favorites')}
+        favorites={favorites}
+        onToggleFavorite={handleToggleFavorite}
       />
     );
   }
@@ -101,7 +124,7 @@ export default function App() {
         cartItems={cart}
         onBack={() => setScreen('cart')}
         onConfirm={({ paymentMethod, address, total, cartItems }) => {
-              const newOrder = {
+          const newOrder = {
             orderCode: 'MB' + Math.floor(100000 + Math.random() * 900000),
             createdAt: new Date().toISOString(),
             paymentMethod,
@@ -110,6 +133,7 @@ export default function App() {
             cartItems,
             status: 'pending',
           };
+
           setOrders((prev) => [newOrder, ...prev]);
           setLastOrder(newOrder);
           handleClearCart();
@@ -119,16 +143,16 @@ export default function App() {
     );
   }
 
-  // 5. ORDER SUCCESS
   if (screen === 'orderSuccess') {
     return (
       <OrderSuccessScreen
         orderInfo={lastOrder}
         onGoHome={() => setScreen('home')}
-        onViewOrders={() => setScreen('orderHistory')}   // ← ĐỔI
+        onViewOrders={() => setScreen('orderHistory')}
       />
     );
   }
+
   if (screen === 'orderHistory') {
     return (
       <OrderHistoryScreen
@@ -147,6 +171,21 @@ export default function App() {
       />
     );
   }
+
+  if (screen === 'favorites') {
+    return (
+      <FavoriteScreen
+        favorites={favorites}
+        onBack={() => setScreen('home')}
+        onRemoveFavorite={handleRemoveFavorite}
+        onAddToCart={handleAddToCart}
+        onGoToProduct={(item) => {
+          Alert.alert('Chi tiết sản phẩm', item.name);
+        }}
+      />
+    );
+  }
+
   if (screen === 'login') {
     return (
       <LoginScreen
@@ -155,14 +194,13 @@ export default function App() {
       />
     );
   }
+
   if (screen === 'ownerHome') {
     return (
       <OwnerHomeScreen
         onProfile={() => setScreen('profile')}
         onLogout={() => setScreen('login')}
-        onProducts={() =>
-          Alert.alert('Sắp ra mắt', 'Màn hình Quản lý sản phẩm')
-        }
+        onProducts={() => setScreen('ownerProducts')}
         onOrders={() =>
           Alert.alert('Sắp ra mắt', 'Màn hình Quản lý đơn hàng')
         }
@@ -172,6 +210,23 @@ export default function App() {
         onPromotions={() =>
           Alert.alert('Sắp ra mắt', 'Màn hình Quản lý khuyến mãi')
         }
+      />
+    );
+  }
+
+  if (screen === 'ownerProducts') {
+    return (
+      <OwnerProductManagementScreen
+        onBack={() => setScreen('ownerHome')}
+        onAddProduct={() => {
+          Alert.alert('Sắp ra mắt', 'Màn hình Thêm sản phẩm');
+        }}
+        onEditProduct={(product) => {
+          Alert.alert(
+            'Sửa sản phẩm',
+            `Bạn muốn sửa "${product.name}"?`
+          );
+        }}
       />
     );
   }

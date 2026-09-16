@@ -8,7 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-const API_URL = 'http://192.168.1.186:3000';
+const API_URL = 'https://chapters-memorabilia-respond-clothing.trycloudflare.com';
 export default function HomeScreen({
   onOwnerLogin,
   cart = [],
