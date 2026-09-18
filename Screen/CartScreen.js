@@ -8,6 +8,11 @@ import {
   Alert,
 } from 'react-native';
 
+import {
+  formatPrice,
+  UI_EMOJI,
+} from '../utils/emoji';
+
 export default function CartScreen({
   cart = [],
   onBack,
@@ -25,6 +30,7 @@ export default function CartScreen({
     0
   );
 
+  /* ============ XỬ LÝ ============= */
   const handleIncrease = (item) => {
     onUpdateQuantity && onUpdateQuantity(item.id, item.quantity + 1);
   };
@@ -56,10 +62,7 @@ export default function CartScreen({
     onGoToCheckout && onGoToCheckout();
   };
 
-  const formatPrice = (price) => {
-    return Number(price).toLocaleString('vi-VN') + 'đ';
-  };
-
+  /*============ HEADER ============*/
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
@@ -67,7 +70,7 @@ export default function CartScreen({
         onPress={onBack}
         activeOpacity={0.7}
       >
-        <Text style={styles.backIcon}>‹</Text>
+        <Text style={styles.backIcon}>{UI_EMOJI.back}</Text>
       </TouchableOpacity>
 
       <Text style={styles.headerTitle}>Giỏ hàng</Text>
@@ -82,14 +85,14 @@ export default function CartScreen({
     </View>
   );
 
-  // ================= EMPTY CART =================
+  /* ============  EMPTY CART ============  */
   if (cart.length === 0) {
     return (
       <View style={styles.container}>
         {renderHeader()}
 
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛒</Text>
+          <Text style={styles.emptyIcon}>{UI_EMOJI.cart}</Text>
 
           <Text style={styles.emptyTitle}>Giỏ hàng đang trống</Text>
 
@@ -109,10 +112,11 @@ export default function CartScreen({
     );
   }
 
-  // ================= CART LIST =================
+  /* ============  CART LIST ============   */
   return (
     <View style={styles.container}>
       {renderHeader()}
+
       <View style={styles.listWrapper}>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -122,7 +126,9 @@ export default function CartScreen({
             <View key={item.id} style={styles.itemCard}>
               {/* PRODUCT IMAGE */}
               <View style={styles.itemImage}>
-                <Text style={styles.itemEmoji}>{item.emoji || '🧁'}</Text>
+                <Text style={styles.itemEmoji}>
+                  {item.emoji || UI_EMOJI.cake}
+                </Text>
               </View>
 
               {/* PRODUCT INFO */}
@@ -141,7 +147,9 @@ export default function CartScreen({
                     onPress={() => handleDecrease(item)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.quantityButtonText}>−</Text>
+                    <Text style={styles.quantityButtonText}>
+                      {UI_EMOJI.minus}
+                    </Text>
                   </TouchableOpacity>
 
                   <Text style={styles.quantityValue}>{item.quantity}</Text>
@@ -151,7 +159,9 @@ export default function CartScreen({
                     onPress={() => handleIncrease(item)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.quantityButtonText}>+</Text>
+                    <Text style={styles.quantityButtonText}>
+                      {UI_EMOJI.plus}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -163,7 +173,9 @@ export default function CartScreen({
                   onPress={() => handleRemove(item)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.removeIcon}>🗑️</Text>
+                  <Text style={styles.removeIcon}>
+                    {UI_EMOJI.trash}
+                  </Text>
                 </TouchableOpacity>
 
                 <Text style={styles.subtotal}>
@@ -202,7 +214,7 @@ export default function CartScreen({
           activeOpacity={0.8}
         >
           <Text style={styles.checkoutText}>Tiến hành thanh toán</Text>
-          <Text style={styles.checkoutArrow}>›</Text>
+          <Text style={styles.checkoutArrow}>{UI_EMOJI.back === '‹' ? '›' : '›'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -217,7 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FDFF',
   },
 
-  /* ================= HEADER ================= */
+  /* ============ HEADER ============  */
 
   header: {
     height: 65,
@@ -437,7 +449,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* ================= BOTTOM BAR ================= */
+  /* ============  BOTTOM BAR ============  */
 
   bottomBar: {
     backgroundColor: '#FFFFFF',

@@ -1,196 +1,169 @@
-import React from "react";
+import React from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TochableOpacity,
-} from 'react - native';
-import { ImageBackground } from "react-native-web";
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 
+import {
+  getProductEmoji,
+  formatPrice,
+  UI_EMOJI,
+} from '../utils/emoji';
 
-export default function FavoriteScreen ({
-    favorites= [],
-    onBack,
-    onPress,
-    onAddToCart,
-    onGoToProduct,
+export default function FavoriteScreen({
+  favorites = [],
+  onBack,
+  onAddToCart,
+  onRemoveFavorite,
+  onGoToProduct,
 }) {
-    const formatPrice = (price) => {
-        return Number(price).toLocaleString('vi-VN')  + 'đ'; 
-    };
-
-    const getProductEmoji= (categoryName)=> {
-        if (!categoryName) return ' ';
-        if (categoryName.includes('Cookies')) return ' ';
-        if (categoryName.includes('Chuối')) return ' ';
-        if (categoryName.includes('Croissant')) return ' ';
-        return ' ';
-    };
-
-    const handleRemove= (item) => {
-        if (onRemoveFavorite) {
-            onRemoveFavorite(item.id);
-        }
-    };
-
-    const handleAddToCart= (item) => {
-        if (onAddToCart){
-            onAddToCart({
-                id: item.id,
-                name: item.name,
-                price: Number(item.price),
-            });
-        }
-    };
-
-    {/*============ EMPTY =========== */}
-    if (favorites.length === 0 ) {
-        return (
-            <View style= {StyleSheet.container}>
-                {/* HEADER */ }
-
-                <View style= {StyleSheet.header}>
-                    <TochableOpacity
-                         style= {StyleSheet.backButton}
-                         onPress= {onBack}
-                         activeOpacity= {0.7}
-                    >
-                        <Text style= {StyleSheet.backIcon}>
-                            ‹
-                        </Text>
-                    </TochableOpacity>
-
-                    <Text style= {styles.headerTitle}>
-                        Yêu thích
-                    </Text>
-
-                    <View style= {styles.headerRight} />
-                </View>
-
-                {/* EMPTY STATE */}
-
-                <View style= {styles.emptyContainer}>
-                    <Text style= {styles.emptyIcon}>
-                        ♡
-                    </Text>
-                    <Text style= {styles.emptyTitle}>
-                            Chưa có sản phẩm ưu thích
-                    </Text>
-                    <Text style= {styles.Text}>
-                        Hãy thả tim cho những loại bánh bạn thích nhé.
-                    </Text>
-
-                    <TochableOpacity
-                        style= {styles.backToShopButton}
-                        onPress={onBack}
-                        activeOpacity= {0.8}
-                    >
-                        <Text style= {styles.backToShopText}>
-                            Khám phá tiệm bánh
-                        </Text>
-                    </TochableOpacity>
-                </View>
-            </View>
-        );
-
+  /* ============ XỬ LÝ ============*/
+  const handleRemove = (item) => {
+    if (onRemoveFavorite) {
+      onRemoveFavorite(item.id);
     }
+  };
 
-    {/*============== LIST ============= */}
+  const handleAddToCart = (item) => {
+    if (onAddToCart) {
+      onAddToCart({
+        id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        emoji: getProductEmoji(item.category_name),
+      });
+    }
+  };
+
+  /* ============ HEADER ============ */
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={onBack}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.backIcon}>{UI_EMOJI.back}</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.headerTitle}>Yêu thích</Text>
+
+      <View style={styles.headerRight}>
+        {favorites.length > 0 && (
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>
+              {favorites.length}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  /* ============ EMPTY ============ */
+  if (favorites.length === 0) {
     return (
-        <View style= {styles.container}>
-            {/*HEADER*/}
-            <View style= {styles.header}>
-                <TochableOpacity
-                    style={styles.backButton}
-                    onPress={onBack}
-                    activeOpacity= {0.8}
-                >
-                    <Text style= {styles.backIcon}>
-                        ‹
-                    </Text>
-                </TochableOpacity>
+      <View style={styles.container}>
+        {renderHeader()}
 
-                <Text style= {styles.headerTitle}>
-                    Yêu thích
-                </Text>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>{UI_EMOJI.favorite}</Text>
 
-                <View style= {styles.headerRight}>
-                    <View style= {styles.countBadge}>
-                        <Text style= {styles.countText}>
-                            {favorites.length}
-                        </Text>
-                    </View>
-                </View>
+          <Text style={styles.emptyTitle}>
+            Chưa có sản phẩm yêu thích
+          </Text>
+
+          <Text style={styles.emptyText}>
+            Hãy thả tim cho những loại bánh bạn thích nhé.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.backToShopButton}
+            onPress={onBack}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.backToShopText}>
+              Khám phá tiệm bánh
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  /* ============ LIST ============ */
+  return (
+    <View style={styles.container}>
+      {renderHeader()}
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+      >
+        {favorites.map((item) => (
+          <View key={item.id} style={styles.itemCard}>
+            {/* IMAGE */}
+            <TouchableOpacity
+              style={styles.itemImage}
+              onPress={() => {
+                if (onGoToProduct) onGoToProduct(item);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.itemEmoji}>
+                {getProductEmoji(item.category_name)}
+              </Text>
+            </TouchableOpacity>
+
+            {/* INFO */}
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName} numberOfLines={1}>
+                {item.name}
+              </Text>
+
+              <Text style={styles.itemDesc} numberOfLines={1}>
+                {item.description}
+              </Text>
+
+              <Text style={styles.itemPrice}>
+                {formatPrice(item.price)}
+              </Text>
             </View>
 
-            {/* LIST */}
-            <ScrollView
-               showsVerticalScrollIndicator= {false}
-               contentContainerStyle= {styles.listContent}
-            >  
-               {favorites.map((item) => (
-                  <View key={item.id} style={styles.itemCard}>
-                     {/* IMAGE */}
-                     <TochableOpacity
-                     style= {styles.itemImage}
-                     onPress={() => {
-                        if(onGoToProduct) onGoToProduct(item);
-                     }}
-                     activeOpacity= {0.8}
-                     >
-                        <Text style= {styles.itemEmoji}>
-                            {getProductEmoji(item.category_name)}
-                        </Text>
-                     </TochableOpacity>
+            {/* ACTIONS */}
+            <View style={styles.itemRight}>
+              {/* NÚT XÓA KHỎI YÊU THÍCH */}
+              <TouchableOpacity
+                style={styles.heartButton}
+                onPress={() => handleRemove(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.heartIcon}>
+                  {UI_EMOJI.favoriteFull}
+                </Text>
+              </TouchableOpacity>
 
-                     {/* INFO */}
-                     <View style= {styles.itemInfo}>
-                        <Text style= {styles.itemName} numberOfLines={1}>
-                            {item.name}
-                        </Text>
-                        
-                        <Text style= {styles.itemDesc} numberOfLines={1}>
-                            {item.description}
-                        </Text>
-
-                        <Text style= {styles.itemPrice}>
-                            {formatPrice(item.price)}
-                        </Text>
-                     </View>
-
-                     {/* ACTIONS */}
-                     <View style= {styles.itemRight}>
-                        {/* NÚT XÓA  */}
-                        <TochableOpacity
-                           style= {styles.heartButton}
-                           onPress={() => handleRemove(item)}
-                           activeOpacity= {0.7}
-                        >
-                            <Text style= {styles.heartIcon}>
-                                ❤️
-                            </Text>
-                        </TochableOpacity>
-
-                        {/* NÚT THÊM */}
-                        <TochableOpacity
-                             style= {styles.addButton}
-                             onPress={() => handleAddToCart(item)}
-                             activeOpacity= {0.7}
-                        >
-                            <Text style= {styles.addIcon}>
-                                 🛒
-                            </Text>
-                        </TochableOpacity>
-                     </View>
-                  </View>
-               )
-
-               )}
-            </ScrollView>
-        </View>
-    );
+              {/* NÚT THÊM VÀO GIỎ */}
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => handleAddToCart(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.addIcon}>
+                  {UI_EMOJI.cart}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
 }
+
 
 const styles = StyleSheet.create({
 
@@ -199,7 +172,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FDFF',
   },
 
-  /* ================= HEADER ================= */
+  /* ============ HEADER ============ */
 
   header: {
     height: 65,
@@ -257,7 +230,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* ================= LIST ================= */
+  /* ============ LIST ============ */
 
   listContent: {
     paddingHorizontal: 20,
@@ -350,7 +323,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-    /* ================= EMPTY ================= */
+  /* ================= EMPTY ================= */
+
   emptyContainer: {
     flex: 1,
     alignItems: 'center',

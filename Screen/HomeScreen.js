@@ -8,13 +8,23 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+
+import {
+  getProductEmoji,
+  formatPrice,
+  UI_EMOJI,
+} from '../utils/emoji';
+
 const API_URL = 'https://chapters-memorabilia-respond-clothing.trycloudflare.com';
+
 export default function HomeScreen({
   onOwnerLogin,
   cart = [],
   onAddToCart,
   onGoToCheckout,
-  onGoToOrders,          
+  onGoToOrders,
+  onGoToFavorite,
+  onGoToProduct,
 }) {
   const [products, setProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
@@ -38,9 +48,7 @@ export default function HomeScreen({
       }
 
       let data = result.data;
-      if (!data) {
-        data = [];
-      }
+      if (!data) data = [];
       setProducts(data);
     } catch (err) {
       console.error('Lỗi lấy sản phẩm:', err);
@@ -50,61 +58,38 @@ export default function HomeScreen({
     }
   };
 
-  const getProductEmoji = (categoryName) => {
-    if (!categoryName) return '🌰';
-
-    if (categoryName.includes('Cookies')) return '🍪';
-    if (categoryName.includes('chuối')) return '🍞';
-    if (categoryName.includes('Croissant')) return '🥐';
-    return '🌰';
-  };
-
+  /* ============ LỌC SẢN PHẨM THEO SEARCH ============ */
   const filteredProducts = products.filter((product) => {
     const keyword = searchText.toLowerCase().trim();
-
     if (!keyword) return true;
 
-    let nameMatch = false;
-    let descMatch = false;
-    let catMatch = false;
-
-    if (product.name) {
-      nameMatch = product.name.toLowerCase().includes(keyword);
-    }
-    if (product.description) {
-      descMatch = product.description.toLowerCase().includes(keyword);
-    }
-    if (product.category_name) {
-      catMatch = product.category_name.toLowerCase().includes(keyword);
-    }
+    const nameMatch = product.name
+      ? product.name.toLowerCase().includes(keyword)
+      : false;
+    const descMatch = product.description
+      ? product.description.toLowerCase().includes(keyword)
+      : false;
+    const catMatch = product.category_name
+      ? product.category_name.toLowerCase().includes(keyword)
+      : false;
 
     return nameMatch || descMatch || catMatch;
   });
 
-  const formatPrice = (price) => {
-    return Number(price).toLocaleString('vi-VN') + 'đ';
-  };
-
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   let cartBadgeContent = cartCount;
-  if (cartCount > 99) {
-    cartBadgeContent = '99+';
-  }
+  if (cartCount > 99) cartBadgeContent = '99+';
 
   let cartLabelStyle = styles.navText;
-  if (cartCount > 0) {
-    cartLabelStyle = styles.navActive;
-  }
+  if (cartCount > 0) cartLabelStyle = styles.navActive;
 
   return (
     <View style={styles.container}>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-
         {/* ================= HEADER ================= */}
         <View style={styles.header}>
           <View>
@@ -121,10 +106,9 @@ export default function HomeScreen({
           </TouchableOpacity>
         </View>
 
-
         {/* ================= SEARCH ================= */}
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchIcon}>{UI_EMOJI.search}</Text>
           <TextInput
             style={styles.searchInput}
             placeholder="Tìm kiếm bánh..."
@@ -133,7 +117,6 @@ export default function HomeScreen({
             onChangeText={setSearchText}
           />
         </View>
-
 
         {/* ================= BANNER + OFFER ================= */}
         <ScrollView
@@ -162,7 +145,6 @@ export default function HomeScreen({
             <Text style={styles.offerEmoji}>🎁</Text>
           </View>
         </ScrollView>
-
 
         {/* ================= CATEGORY ================= */}
         <View style={styles.sectionHeader}>
@@ -196,13 +178,11 @@ export default function HomeScreen({
           </TouchableOpacity>
         </ScrollView>
 
-
         {/* ================= PRODUCTS HEADER ================= */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Bánh nổi bật</Text>
           <Text style={styles.seeAll}>Xem tất cả</Text>
         </View>
-
 
         {/* ================= LOADING ================= */}
         {loading && (
@@ -212,11 +192,10 @@ export default function HomeScreen({
           </View>
         )}
 
-
         {/* ================= ERROR ================= */}
         {!loading && error !== '' && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorIcon}>⚠️</Text>
+            <Text style={styles.errorIcon}>{UI_EMOJI.retry}</Text>
             <Text style={styles.errorText}>{error}</Text>
 
             <TouchableOpacity
@@ -228,8 +207,7 @@ export default function HomeScreen({
           </View>
         )}
 
-
-        {/* ================= DANH SÁCH SẢN PHẨM ================= */}
+        {/* ================= EMPTY ================= */}
         {!loading && error === '' && filteredProducts.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🍰</Text>
@@ -239,6 +217,7 @@ export default function HomeScreen({
           </View>
         )}
 
+        {/* ================= DANH SÁCH SẢN PHẨM ================= */}
         {!loading && error === '' && filteredProducts.length > 0 && (
           <View style={styles.productRow}>
             {filteredProducts.map((product) => (
@@ -246,6 +225,9 @@ export default function HomeScreen({
                 key={product.id}
                 style={styles.productCard}
                 activeOpacity={0.8}
+                onPress={() => {
+                  if (onGoToProduct) onGoToProduct(product);
+                }}
               >
                 <View style={styles.productImage}>
                   <Text style={styles.productEmoji}>
@@ -275,37 +257,37 @@ export default function HomeScreen({
                           id: product.id,
                           name: product.name,
                           price: Number(product.price),
+                          emoji: getProductEmoji(product.category_name),
                         });
                       }
                     }}
                   >
-                    <Text style={styles.addText}>+</Text>
+                    <Text style={styles.addText}>{UI_EMOJI.plus}</Text>
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
         )}
-
       </ScrollView>
-
 
       {/* ================= BOTTOM NAVIGATION ================= */}
       <View style={styles.bottomNav}>
-
         {/* HOME */}
         <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Text style={styles.navIcon}>⌂</Text>
+          <Text style={styles.navIcon}>{UI_EMOJI.home}</Text>
           <Text style={styles.navActive}>Trang chủ</Text>
         </TouchableOpacity>
 
-
         {/* FAVORITE */}
-        <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-          <Text style={styles.navIcon}>♡</Text>
+        <TouchableOpacity
+          style={styles.navItem}
+          activeOpacity={0.7}
+          onPress={onGoToFavorite}
+        >
+          <Text style={styles.navIcon}>{UI_EMOJI.favorite}</Text>
           <Text style={styles.navText}>Yêu thích</Text>
         </TouchableOpacity>
-
 
         {/* CART */}
         <TouchableOpacity
@@ -314,7 +296,7 @@ export default function HomeScreen({
           onPress={onGoToCheckout}
         >
           <View style={styles.cartIconWrapper}>
-            <Text style={styles.navIcon}>🛒</Text>
+            <Text style={styles.navIcon}>{UI_EMOJI.cart}</Text>
 
             {cartCount > 0 && (
               <View style={styles.cartBadge}>
@@ -328,27 +310,22 @@ export default function HomeScreen({
           <Text style={cartLabelStyle}>Giỏ hàng</Text>
         </TouchableOpacity>
 
-
         {/* ORDER HISTORY */}
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
           onPress={onGoToOrders}
         >
-          <Text style={styles.navIcon}>📦</Text>
+          <Text style={styles.navIcon}>{UI_EMOJI.order}</Text>
           <Text style={styles.navText}>Đơn hàng</Text>
         </TouchableOpacity>
-
       </View>
-
     </View>
   );
 }
 
 
-
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#F8FDFF',
@@ -732,5 +709,4 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
   },
-
 });
