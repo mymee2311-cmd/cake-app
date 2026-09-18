@@ -11,6 +11,7 @@ const CATEGORY_EMOJI_MAP = [
 ];
 
 const DEFAULT_PRODUCT_EMOJI = '🌰';
+
 export function getProductEmoji(categoryName) {
   if (!categoryName) return DEFAULT_PRODUCT_EMOJI;
 
@@ -71,48 +72,80 @@ export function getPaymentLabel(method) {
 }
 
 export const UI_EMOJI = {
-  
-  back:        '‹',
-  home:        '⌂',
+  // ============ NAVIGATION ============
+  back:           '‹',
+  arrowRight:     '›',
+  home:           '⌂',
 
-  favorite:    '♡',
-  favoriteFull:'❤️',
-  heartEmpty:  '🤍',
-  cart:        '🛒',
-  order:       '📦',
-  notification:'🔔',
+  // ============ TAB / NAV ============
+  favorite:       '♡',
+  favoriteFull:   '❤️',
+  heartEmpty:     '🤍',
+  cart:           '🛒',
+  order:          '📦',
+  notification:   '🔔',
 
-  
-  search:      '🔍',
-  plus:        '+',
-  minus:       '−',
-  trash:       '🗑️',
-  check:       '✓',
-  close:       '✕',
-  edit:        '✏️',
-  logout:      '↪',
-  retry:       '⚠️',
+  // ============ ACTIONS ============
+  search:         '🔍',
+  plus:           '+',
+  minus:          '−',
+  trash:          '🗑️',
+  check:          '✓',
+  close:          '✕',
+  edit:           '✏️',
+  logout:         '↪',
+  retry:          '⚠️',
+  ownerLogin:     '🔐',
+  eye:            '👁️',
+  eyeOff:         '🙈',
 
-  
-  user:        '👤',
-  phone:       '📱',
-  email:       '✉️',
-  address:     '📍',
-  store:       '🏪',
-  avatar:      '👩‍🍳',
+  // ============ PROFILE ============
+  user:           '👤',
+  phone:          '📱',
+  email:          '✉️',
+  address:        '📍',
+  store:          '🏪',
+  avatar:         '👩‍🍳',
+  password:       '🔒',
+  welcome:        '👋',
 
-  
-  cash:        '💵',
-  bank:        '🏦',
-  momo:        '📱',
-  gift:        '🎁',
+  // ============ PAYMENT ============
+  cash:           '💵',
+  bank:           '🏦',
+  momo:           '📱',
+  gift:           '🎁',
+  sparkles:       '✨',
 
-  
-  cake:        '🧁',
-  money:       '💰',
-  customers:   '👥',
-  revenue:     '💰',
-  category:    '🏷️',
+  // ============ PRODUCT / CATEGORY ============
+  cake:           '🧁',
+  cookie:         '🍪',
+  bread:          '🍞',
+  croissant:      '🥐',
+  creamCake:      '🍰',
+  nut:            '🌰',
+  donut:          '🍩',
+  pizza:          '🍕',
+
+  // ============ DASHBOARD / STATS ============
+  money:          '💰',
+  customers:      '👥',
+  revenue:        '💰',
+  category:       '🏷️',
+
+  // ============ ORDER STATUS ============
+  pending:        '⏳',
+  confirmed:      '✅',
+  delivering:     '🚚',
+  completed:      '🎉',
+  cancelled:      '❌',
+
+  // ============ MISC ============
+  bell:           '🔔',
+  tag:            '🏷️',
+  bag:            '🛍️',
+  truck:          '🚚',
+  box:            '📦',
+  clipboard:      '📋',
 };
 
 export function formatPrice(price) {
@@ -138,6 +171,7 @@ export function formatTimeAgo(dateString) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${day}/${month}/${date.getFullYear()}`;
 }
+
 export function formatDateTime(dateString) {
   if (!dateString) return '';
 
