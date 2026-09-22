@@ -149,6 +149,124 @@ app.get('/api/products/featured', (req, res) => {
     });
   });
 });
+
+// ==================== THÊM SẢN PHẨM MỚI ====================
+app.post('/api/products', (req, res) => {
+  const { name, description, price, stock, category_id, image } = req.body;
+
+  // Validate
+  if (!name || !price) {
+    return res.status(400).json({
+      success: false,
+      error: 'Thiếu tên hoặc giá sản phẩm',
+    });
+  }
+
+  const sql = `
+    INSERT INTO products 
+      (category_id, product_name, description, price, image, stock, is_featured, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, 0, 1)
+  `;
+
+  const values = [
+    Number(category_id) || 1,
+    String(name).trim(),
+    String(description || '').trim(),
+    Number(price),
+    String(image || '').trim(),
+    Number(stock) || 0,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('Lỗi thêm sản phẩm:', err.message);
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+      });
+    }
+
+    console.log('Đã thêm sản phẩm mới, ID =', result.insertId);
+
+    res.json({
+      success: true,
+      message: 'Đã thêm sản phẩm thành công',
+      data: { id: result.insertId },
+    });
+  });
+});
+
+// ==================== CẬP NHẬT SẢN PHẨM ====================
+app.put('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+  const { name, description, price, stock, category_id, image } = req.body;
+
+  if (!name || !price) {
+    return res.status(400).json({
+      success: false,
+      error: 'Thiếu tên hoặc giá sản phẩm',
+    });
+  }
+
+  const sql = `
+    UPDATE products 
+    SET product_name = ?,
+        description = ?,
+        price = ?,
+        image = ?,
+        stock = ?,
+        category_id = ?
+    WHERE product_id = ?
+  `;
+
+  const values = [
+    String(name).trim(),
+    String(description || '').trim(),
+    Number(price),
+    String(image || '').trim(),
+    Number(stock) || 0,
+    Number(category_id) || 1,
+    productId,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('Lỗi cập nhật sản phẩm:', err.message);
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Đã cập nhật sản phẩm',
+    });
+  });
+});
+
+// ==================== XÓA SẢN PHẨM (soft delete) ====================
+app.delete('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+
+  const sql = `UPDATE products SET is_active = 0 WHERE product_id = ?`;
+
+  db.query(sql, [productId], (err, result) => {
+    if (err) {
+      console.error('Lỗi xóa sản phẩm:', err.message);
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Đã xóa sản phẩm',
+    });
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {

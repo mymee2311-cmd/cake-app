@@ -13,6 +13,7 @@ import OrderHistoryScreen from './Screen/OrderHistoryScreen';
 import OrderSuccessScreen from './Screen/OrderSuccessScreen';
 import OwnerProductManagementScreen from './Screen/OwnerProductManagementScreen';
 import FavoriteScreen from './Screen/FavoriteScreen';
+import AddProductScreen from './Screen/AddProductScreen';            
 
 export default function App() {
   const [screen, setScreen] = useState('splash');
@@ -27,7 +28,9 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
   const [lastOrder, setLastOrder] = useState(null);
-  const [favorites, setFavorites] = useState([]);       // ⭐ THÊM
+  const [favorites, setFavorites] = useState([]);
+
+  const [productRefreshKey, setProductRefreshKey] = useState(0);       
 
   /* ================= CART HANDLERS ================= */
 
@@ -69,7 +72,6 @@ export default function App() {
     setCart([]);
   };
 
-
   const handleToggleFavorite = (product) => {
     setFavorites((prev) => {
       const found = prev.find((p) => p.id === product.id);
@@ -99,7 +101,10 @@ export default function App() {
         onAddToCart={handleAddToCart}
         onGoToCheckout={() => setScreen('cart')}
         onGoToOrders={() => setScreen('orderHistory')}
-        onGoToFavorites={() => setScreen('favorites')}
+        onGoToFavorite={() => setScreen('favorites')}                  
+        onGoToProduct={(product) => {                                 
+          Alert.alert('Chi tiết sản phẩm', product.name);
+        }}
         favorites={favorites}
         onToggleFavorite={handleToggleFavorite}
       />
@@ -214,22 +219,31 @@ export default function App() {
     );
   }
 
+
   if (screen === 'ownerProducts') {
     return (
       <OwnerProductManagementScreen
+        key={productRefreshKey}                                        
         onBack={() => setScreen('ownerHome')}
-        onAddProduct={() => {
-          Alert.alert('Sắp ra mắt', 'Màn hình Thêm sản phẩm');
-        }}
+        onAddProduct={() => setScreen('addProduct')}                 
         onEditProduct={(product) => {
-          Alert.alert(
-            'Sửa sản phẩm',
-            `Bạn muốn sửa "${product.name}"?`
-          );
+          Alert.alert('Sửa sản phẩm', `Bạn muốn sửa "${product.name}"?`);
         }}
       />
     );
   }
+
+  if (screen === 'addProduct') {                                     
+    return (
+      <AddProductScreen
+        onBack={() => setScreen('ownerProducts')}
+        onSuccess={() => setProductRefreshKey((k) => k + 1)}
+      />
+    );
+  }
+
+  /* ================= PROFILE ================= */
+
   if (screen === 'profile') {
     return (
       <ProfileScreen
@@ -253,5 +267,6 @@ export default function App() {
       />
     );
   }
+
   return <View />;
 }

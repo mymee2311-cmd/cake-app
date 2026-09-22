@@ -8,14 +8,13 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-
+import { API_URL } from '../utils/api';  
 import {
   getProductEmoji,
   formatPrice,
   UI_EMOJI,
 } from '../utils/emoji';
-
-const API_URL = 'https://chapters-memorabilia-respond-clothing.trycloudflare.com';
+ 
 
 export default function HomeScreen({
   onOwnerLogin,

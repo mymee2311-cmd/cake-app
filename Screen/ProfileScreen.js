@@ -6,6 +6,11 @@ import {
     TouchableOpacity,
     ScrollView,
 } from "react-native";
+import {
+    getProductEmoji,
+    formatPrice,
+    UI_EMOJI,
+} from '../utils/emoji';
 
 export default function ProfileScreen({
     onBack,
