@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,44 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 
+import { API_URL } from '../utils/api';
+
 export default function OrderHistoryScreen({
-  orders = [],
   onBack,
   onViewOrderDetail,
 }) {
+  const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/api/orders`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Không thể lấy đơn');
+      }
+
+      setOrders(result.data || []);
+    } catch (err) {
+      console.error('Lỗi lấy đơn:', err);
+      setError('Không thể kết nối máy chủ');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price) => {
     return Number(price).toLocaleString('vi-VN') + 'đ';
@@ -33,6 +63,14 @@ export default function OrderHistoryScreen({
   };
 
   const getStatusInfo = (status) => {
+    if (status === 'pending_payment') {
+      return {
+        label: 'Chờ shop nhận tiền',
+        bg: '#FFE8F0',
+        color: '#D6336C',
+        icon: '💰',
+      };
+    }
     if (status === 'pending') {
       return {
         label: 'Chờ xác nhận',
@@ -88,6 +126,7 @@ export default function OrderHistoryScreen({
 
   const filters = [
     { key: 'all', label: 'Tất cả' },
+    { key: 'pending_payment', label: 'Chờ nhận tiền' },
     { key: 'pending', label: 'Chờ xác nhận' },
     { key: 'confirmed', label: 'Đã xác nhận' },
     { key: 'delivering', label: 'Đang giao' },
@@ -98,32 +137,21 @@ export default function OrderHistoryScreen({
   const renderOrderItem = ({ item }) => {
     const statusInfo = getStatusInfo(item.status);
 
-    let totalItems = 0;
-    if (item.cartItems) {
-      totalItems = item.cartItems.reduce(
-        (sum, p) => sum + p.quantity,
-        0
-      );
-    }
-
     return (
       <TouchableOpacity
         style={styles.orderCard}
         onPress={() => {
-          if (onViewOrderDetail) {
-            onViewOrderDetail(item);
-          }
+          if (onViewOrderDetail) onViewOrderDetail(item);
         }}
         activeOpacity={0.8}
       >
-        {/* HEADER */}
         <View style={styles.orderHeader}>
           <View>
             <Text style={styles.orderCode}>
-              {item.orderCode || 'MB000000'}
+              {item.order_code || 'MB000000'}
             </Text>
             <Text style={styles.orderDate}>
-              {formatDate(item.createdAt)}
+              {formatDate(item.created_at)}
             </Text>
           </View>
 
@@ -146,13 +174,12 @@ export default function OrderHistoryScreen({
 
         <View style={styles.divider} />
 
-        {/* SẢN PHẨM PREVIEW */}
         <View style={styles.previewRow}>
           <Text style={styles.previewIcon}>🧁</Text>
 
           <View style={styles.previewInfo}>
             <Text style={styles.previewText}>
-              {totalItems} sản phẩm
+              {item.customer_name || 'Khách'}
             </Text>
             <Text style={styles.previewPrice}>
               {formatPrice(item.total || 0)}
@@ -165,27 +192,75 @@ export default function OrderHistoryScreen({
     );
   };
 
-  // ===== EMPTY STATE =====
+  /* HEADER */
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={onBack}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.backIcon}>‹</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
+
+      <View style={styles.headerRight}>
+        {orders.length > 0 && (
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{orders.length}</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  /* LOADING */
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        {renderHeader()}
+        <View style={styles.noResultContainer}>
+          <ActivityIndicator size="large" color="#75B9C8" />
+          <Text style={styles.noResultText}>
+            Đang tải đơn hàng...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  /* ERROR */
+  if (error !== '') {
+    return (
+      <View style={styles.container}>
+        {renderHeader()}
+        <View style={styles.noResultContainer}>
+          <Text style={styles.noResultIcon}>⚠️</Text>
+          <Text style={styles.noResultText}>{error}</Text>
+
+          <TouchableOpacity
+            style={styles.backToShopButton}
+            onPress={fetchOrders}
+          >
+            <Text style={styles.backToShopText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  /* EMPTY */
   if (orders.length === 0) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={onBack}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backIcon}>‹</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
-
-          <View style={styles.headerRight} />
-        </View>
+        {renderHeader()}
 
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📦</Text>
-          <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
+          <Text style={styles.emptyTitle}>
+            Chưa có đơn hàng nào
+          </Text>
           <Text style={styles.emptyText}>
             Hãy đặt bánh để xem lịch sử đơn hàng nhé!
           </Text>
@@ -202,28 +277,12 @@ export default function OrderHistoryScreen({
     );
   }
 
+  /* MAIN */
   return (
     <View style={styles.container}>
-      {/* ================= HEADER ================= */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={onBack}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.backIcon}>‹</Text>
-        </TouchableOpacity>
+      {renderHeader()}
 
-        <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
-
-        <View style={styles.headerRight}>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{orders.length}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ================= FILTER TABS ================= */}
+      {/* FILTER TABS */}
       <View style={styles.filterWrapper}>
         <ScrollView
           horizontal
@@ -231,31 +290,32 @@ export default function OrderHistoryScreen({
           contentContainerStyle={styles.filterContent}
         >
           {filters.map((f) => {
-            let tabStyle = styles.filterTab;
-            if (filter === f.key) {
-              tabStyle = styles.filterTabActive;
-            }
-
-            let textStyle = styles.filterText;
-            if (filter === f.key) {
-              textStyle = styles.filterTextActive;
-            }
-
+            const active = filter === f.key;
             return (
               <TouchableOpacity
                 key={f.key}
-                style={tabStyle}
+                style={[
+                  styles.filterTab,
+                  active && styles.filterTabActive,
+                ]}
                 onPress={() => setFilter(f.key)}
                 activeOpacity={0.7}
               >
-                <Text style={textStyle}>{f.label}</Text>
+                <Text
+                  style={[
+                    styles.filterText,
+                    active && styles.filterTextActive,
+                  ]}
+                >
+                  {f.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* ================= DANH SÁCH ĐƠN ================= */}
+      {/* DANH SÁCH */}
       {filteredOrders.length === 0 && (
         <View style={styles.noResultContainer}>
           <Text style={styles.noResultIcon}>🔍</Text>
@@ -268,9 +328,7 @@ export default function OrderHistoryScreen({
       {filteredOrders.length > 0 && (
         <FlatList
           data={filteredOrders}
-          keyExtractor={(item, index) =>
-            item.orderCode || String(index)
-          }
+          keyExtractor={(item, index) => String(item.id || index)}
           renderItem={renderOrderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -282,14 +340,12 @@ export default function OrderHistoryScreen({
 
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#F8FDFF',
   },
 
-  /* ================= HEADER ================= */
-
+  /* HEADER */
   header: {
     height: 65,
     paddingTop: 44,
@@ -345,8 +401,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* ================= FILTER ================= */
-
+  /* FILTER */
   filterWrapper: {
     paddingVertical: 12,
     marginBottom: 8,
@@ -390,8 +445,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* ================= LIST ================= */
-
+  /* LIST */
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
@@ -480,8 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* ================= EMPTY ================= */
-
+  /* EMPTY */
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -526,8 +579,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* ================= NO RESULT ================= */
-
+  /* NO RESULT */
   noResultContainer: {
     flex: 1,
     alignItems: 'center',
@@ -545,5 +597,4 @@ const styles = StyleSheet.create({
     color: '#89A5AA',
     textAlign: 'center',
   },
-
 });

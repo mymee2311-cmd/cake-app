@@ -8,13 +8,13 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { API_URL } from '../utils/api';  
+import { API_URL } from '../utils/api';
 import {
   getProductEmoji,
   formatPrice,
   UI_EMOJI,
 } from '../utils/emoji';
- 
+
 
 export default function HomeScreen({
   onOwnerLogin,
@@ -24,6 +24,8 @@ export default function HomeScreen({
   onGoToOrders,
   onGoToFavorite,
   onGoToProduct,
+  favorites = [],              
+  onToggleFavorite,            
 }) {
   const [products, setProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
@@ -57,7 +59,11 @@ export default function HomeScreen({
     }
   };
 
-  /* ============ LỌC SẢN PHẨM THEO SEARCH ============ */
+  const isFavorite = (productId) => {
+    if (!favorites || favorites.length === 0) return false;
+    return favorites.some((fav) => fav.id === productId);
+  };
+
   const filteredProducts = products.filter((product) => {
     const keyword = searchText.toLowerCase().trim();
     if (!keyword) return true;
@@ -216,7 +222,7 @@ export default function HomeScreen({
           </View>
         )}
 
-        {/* ================= DANH SÁCH SẢN PHẨM ================= */}
+        {/* ================= DANH SÁCH SẢN PHẨM  ================= */}
         {!loading && error === '' && filteredProducts.length > 0 && (
           <View style={styles.productRow}>
             {filteredProducts.map((product) => (
@@ -228,10 +234,34 @@ export default function HomeScreen({
                   if (onGoToProduct) onGoToProduct(product);
                 }}
               >
-                <View style={styles.productImage}>
-                  <Text style={styles.productEmoji}>
-                    {getProductEmoji(product.category_name)}
-                  </Text>
+                {/* ẢNH + NÚT TIM  */}
+                <View style={styles.productImageWrapper}>
+                  <View style={styles.productImage}>
+                    <Text style={styles.productEmoji}>
+                      {getProductEmoji(product.category_name)}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      if (onToggleFavorite) {
+                        onToggleFavorite({
+                          id: product.id,
+                          name: product.name,
+                          price: Number(product.price),
+                          description: product.description,
+                          category_name: product.category_name,
+                        });
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.favoriteIcon}>
+                      {isFavorite(product.id) ? '❤️' : '🤍'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 <Text style={styles.productName} numberOfLines={1}>
@@ -250,7 +280,8 @@ export default function HomeScreen({
                   <TouchableOpacity
                     style={styles.addButton}
                     activeOpacity={0.7}
-                    onPress={() => {
+                    onPress={(e) => {
+                      e.stopPropagation();
                       if (onAddToCart) {
                         onAddToCart({
                           id: product.id,
@@ -272,13 +303,11 @@ export default function HomeScreen({
 
       {/* ================= BOTTOM NAVIGATION ================= */}
       <View style={styles.bottomNav}>
-        {/* HOME */}
         <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
           <Text style={styles.navIcon}>{UI_EMOJI.home}</Text>
           <Text style={styles.navActive}>Trang chủ</Text>
         </TouchableOpacity>
 
-        {/* FAVORITE */}
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
@@ -288,7 +317,6 @@ export default function HomeScreen({
           <Text style={styles.navText}>Yêu thích</Text>
         </TouchableOpacity>
 
-        {/* CART */}
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
@@ -309,7 +337,6 @@ export default function HomeScreen({
           <Text style={cartLabelStyle}>Giỏ hàng</Text>
         </TouchableOpacity>
 
-        {/* ORDER HISTORY */}
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
@@ -541,6 +568,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
+  /* ⭐ WRAPPER CHO ẢNH + NÚT TIM */
+  productImageWrapper: {
+    position: 'relative',
+  },
+
   productImage: {
     height: 120,
     borderRadius: 14,
@@ -552,6 +584,28 @@ const styles = StyleSheet.create({
 
   productEmoji: {
     fontSize: 55,
+  },
+
+  /* ⭐ NÚT TIM */
+  favoriteButton: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+
+  favoriteIcon: {
+    fontSize: 18,
   },
 
   productName: {

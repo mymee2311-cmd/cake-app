@@ -13,7 +13,8 @@ import OrderHistoryScreen from './Screen/OrderHistoryScreen';
 import OrderSuccessScreen from './Screen/OrderSuccessScreen';
 import OwnerProductManagementScreen from './Screen/OwnerProductManagementScreen';
 import FavoriteScreen from './Screen/FavoriteScreen';
-import AddProductScreen from './Screen/AddProductScreen';            
+import AddProductScreen from './Screen/AddProductScreen';
+import OwnerOrderManagementScreen from './Screen/OwnerOrderManagementScreen';
 
 export default function App() {
   const [screen, setScreen] = useState('splash');
@@ -30,7 +31,7 @@ export default function App() {
   const [lastOrder, setLastOrder] = useState(null);
   const [favorites, setFavorites] = useState([]);
 
-  const [productRefreshKey, setProductRefreshKey] = useState(0);       
+  const [productRefreshKey, setProductRefreshKey] = useState(0);
 
   /* ================= CART HANDLERS ================= */
 
@@ -39,13 +40,12 @@ export default function App() {
       const found = prev.find((p) => p.id === product.id);
 
       if (found) {
-        const updated = prev.map((p) => {
+        return prev.map((p) => {
           if (p.id === product.id) {
             return { ...p, quantity: p.quantity + 1 };
           }
           return p;
         });
-        return updated;
       }
 
       return [...prev, { ...product, quantity: 1 }];
@@ -53,15 +53,11 @@ export default function App() {
   };
 
   const handleUpdateQuantity = (productId, newQuantity) => {
-    setCart((prev) => {
-      const updated = prev.map((item) => {
-        if (item.id === productId) {
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
-      return updated;
-    });
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId ? { ...item, quantity: newQuantity } : item
+      )
+    );
   };
 
   const handleRemoveItem = (productId) => {
@@ -75,10 +71,7 @@ export default function App() {
   const handleToggleFavorite = (product) => {
     setFavorites((prev) => {
       const found = prev.find((p) => p.id === product.id);
-
-      if (found) {
-        return prev.filter((p) => p.id !== product.id);
-      }
+      if (found) return prev.filter((p) => p.id !== product.id);
       return [...prev, product];
     });
   };
@@ -101,8 +94,8 @@ export default function App() {
         onAddToCart={handleAddToCart}
         onGoToCheckout={() => setScreen('cart')}
         onGoToOrders={() => setScreen('orderHistory')}
-        onGoToFavorite={() => setScreen('favorites')}                  
-        onGoToProduct={(product) => {                                 
+        onGoToFavorite={() => setScreen('favorites')}
+        onGoToProduct={(product) => {
           Alert.alert('Chi tiết sản phẩm', product.name);
         }}
         favorites={favorites}
@@ -128,14 +121,17 @@ export default function App() {
       <CheckOutScreen
         cartItems={cart}
         onBack={() => setScreen('cart')}
-        onConfirm={({ paymentMethod, address, total, cartItems }) => {
+        onConfirm={(orderData) => {
           const newOrder = {
-            orderCode: 'MB' + Math.floor(100000 + Math.random() * 900000),
+            orderCode: orderData.orderCode,
+            orderId: orderData.orderId,
             createdAt: new Date().toISOString(),
-            paymentMethod,
-            address,
-            total,
-            cartItems,
+            paymentMethod: orderData.paymentMethod,
+            address: orderData.address,
+            name: orderData.name,
+            phone: orderData.phone,
+            total: orderData.total,
+            cartItems: orderData.cartItems,
             status: 'pending',
           };
 
@@ -158,17 +154,17 @@ export default function App() {
     );
   }
 
+  // ==================== ORDER HISTORY ====================
   if (screen === 'orderHistory') {
     return (
       <OrderHistoryScreen
-        orders={orders}
         onBack={() => setScreen('home')}
         onViewOrderDetail={(order) => {
           setLastOrder(order);
           Alert.alert(
             'Chi tiết đơn hàng',
-            `Mã đơn: ${order.orderCode}\n` +
-              `Tổng: ${order.total.toLocaleString('vi-VN')}đ\n` +
+            `Mã đơn: ${order.order_code}\n` +
+              `Tổng: ${Number(order.total).toLocaleString('vi-VN')}đ\n` +
               `Trạng thái: ${order.status}\n` +
               `Địa chỉ: ${order.address}`
           );
@@ -206,9 +202,7 @@ export default function App() {
         onProfile={() => setScreen('profile')}
         onLogout={() => setScreen('login')}
         onProducts={() => setScreen('ownerProducts')}
-        onOrders={() =>
-          Alert.alert('Sắp ra mắt', 'Màn hình Quản lý đơn hàng')
-        }
+        onOrders={() => setScreen('ownerOrders')}
         onCategories={() =>
           Alert.alert('Sắp ra mắt', 'Màn hình Quản lý danh mục')
         }
@@ -219,13 +213,12 @@ export default function App() {
     );
   }
 
-
   if (screen === 'ownerProducts') {
     return (
       <OwnerProductManagementScreen
-        key={productRefreshKey}                                        
+        key={productRefreshKey}
         onBack={() => setScreen('ownerHome')}
-        onAddProduct={() => setScreen('addProduct')}                 
+        onAddProduct={() => setScreen('addProduct')}
         onEditProduct={(product) => {
           Alert.alert('Sửa sản phẩm', `Bạn muốn sửa "${product.name}"?`);
         }}
@@ -233,7 +226,7 @@ export default function App() {
     );
   }
 
-  if (screen === 'addProduct') {                                     
+  if (screen === 'addProduct') {
     return (
       <AddProductScreen
         onBack={() => setScreen('ownerProducts')}
@@ -242,7 +235,13 @@ export default function App() {
     );
   }
 
-  /* ================= PROFILE ================= */
+  if (screen === 'ownerOrders') {
+    return (
+      <OwnerOrderManagementScreen
+        onBack={() => setScreen('ownerHome')}
+      />
+    );
+  }
 
   if (screen === 'profile') {
     return (
