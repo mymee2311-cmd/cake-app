@@ -51,10 +51,12 @@ app.get('/api/test-db', (req, res) => {
   });
 });
 
+// ==================== GET: DANH SÁCH SẢN PHẨM ====================
 app.get('/api/products', (req, res) => {
   const sql = `
     SELECT
       p.product_id AS id,
+      p.category_id AS category_id,
       p.product_name AS name,
       p.description,
       p.price,
@@ -114,10 +116,12 @@ app.get('/api/categories', (req, res) => {
   });
 });
 
+// ==================== GET: SẢN PHẨM NỔI BẬT ====================
 app.get('/api/products/featured', (req, res) => {
   const sql = `
     SELECT
       p.product_id AS id,
+      p.category_id AS category_id,
       p.product_name AS name,
       p.description,
       p.price,
@@ -154,7 +158,6 @@ app.get('/api/products/featured', (req, res) => {
 app.post('/api/products', (req, res) => {
   const { name, description, price, stock, category_id, image } = req.body;
 
-  // Validate
   if (!name || !price) {
     return res.status(400).json({
       success: false,
@@ -245,7 +248,7 @@ app.put('/api/products/:id', (req, res) => {
   });
 });
 
-// ==================== XÓA SẢN PHẨM (soft delete) ====================
+// ==================== XÓA SẢN PHẨM ====================
 app.delete('/api/products/:id', (req, res) => {
   const productId = req.params.id;
 

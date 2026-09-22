@@ -8,8 +8,16 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
-import { API_URL } from '../utils/api';  
+import { API_URL } from '../utils/api';
+
+const CATEGORIES = [
+  { id: 1, name: 'Bánh hạt', emoji: '🌰' },
+  { id: 2, name: 'Bánh quy', emoji: '🍪' },
+  { id: 3, name: 'Bánh mì', emoji: '🥐' },
+  { id: 4, name: 'Bánh kem', emoji: '🍰' },
+];
 
 export default function OwnerProductManagementScreen({
   onBack,
@@ -21,12 +29,22 @@ export default function OwnerProductManagementScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // ===== MODAL SỬA =====
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editStock, setEditStock] = useState('');
+  const [editImage, setEditImage] = useState('');
+  const [editCategoryId, setEditCategoryId] = useState(1);
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
-    try {0
+    try {
       setLoading(true);
       setError('');
 
@@ -62,7 +80,7 @@ export default function OwnerProductManagementScreen({
     return '🌰';
   };
 
-  {/* ===== Lọc sản phẩm theo từ khoá ===== */}
+  // ===== FILTER =====
   let filteredProducts = products;
   const keyword = searchText.toLowerCase().trim();
 
@@ -82,6 +100,7 @@ export default function OwnerProductManagementScreen({
     });
   }
 
+  // ===== DELETE =====
   const handleDelete = (product) => {
     Alert.alert(
       'Xóa sản phẩm',
@@ -91,33 +110,102 @@ export default function OwnerProductManagementScreen({
         {
           text: 'Xóa',
           style: 'destructive',
-          onPress: () => {
-            setProducts((prev) =>
-              prev.filter((p) => p.id !== product.id)
-            );
+          onPress: async () => {
+            try {
+              const response = await fetch(
+                `${API_URL}/api/products/${product.id}`,
+                { method: 'DELETE' }
+              );
+
+              const result = await response.json();
+
+              if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Không thể xóa');
+              }
+
+              Alert.alert('Thành công', 'Đã xóa sản phẩm');
+              fetchProducts();
+            } catch (err) {
+              console.error('Lỗi xóa:', err);
+              Alert.alert('Lỗi', err.message || 'Không thể kết nối');
+            }
           },
         },
       ]
     );
   };
 
+  // ===== EDIT — MỞ MODAL =====
   const handleEdit = (product) => {
-    if (onEditProduct) {
-      onEditProduct(product);
-    } else {
-      Alert.alert(
-        'Sửa sản phẩm',
-        `Bạn muốn sửa "${product.name}"?\n\n` +
-          `Giá: ${formatPrice(product.price)}\n` +
-          `Tồn kho: ${product.stock}`
+    setEditingProduct(product);
+    setEditName(product.name || '');
+    setEditDescription(product.description || '');
+    setEditPrice(String(product.price || ''));
+    setEditStock(String(product.stock || ''));
+    setEditImage(product.image || '');
+    setEditCategoryId(product.category_id || 1);
+
+    if (onEditProduct) onEditProduct(product);
+  };
+
+  const closeEditModal = () => {
+    setEditingProduct(null);
+  };
+
+  // ===== SAVE EDIT =====
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên sản phẩm');
+      return;
+    }
+    if (!editPrice.trim() || isNaN(Number(editPrice)) || Number(editPrice) <= 0) {
+      Alert.alert('Giá không hợp lệ', 'Vui lòng nhập giá sản phẩm');
+      return;
+    }
+    if (!editStock.trim() || isNaN(Number(editStock)) || Number(editStock) < 0) {
+      Alert.alert('Số lượng không hợp lệ', 'Vui lòng nhập số lượng tồn kho');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products/${editingProduct.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: editName.trim(),
+            description: editDescription.trim(),
+            price: Number(editPrice),
+            stock: Number(editStock),
+            image: editImage.trim(),
+            category_id: editCategoryId,
+          }),
+        }
       );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Không thể cập nhật');
+      }
+
+      Alert.alert('Thành công', 'Đã cập nhật sản phẩm!');
+      closeEditModal();
+      fetchProducts();
+    } catch (err) {
+      console.error('Lỗi cập nhật:', err);
+      Alert.alert('Lỗi', err.message || 'Không thể kết nối máy chủ');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <View style={styles.container}>
-
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -132,8 +220,7 @@ export default function OwnerProductManagementScreen({
         <View style={styles.headerRight} />
       </View>
 
-
-      {/* ================= STATS ================= */}
+      {/* STATS */}
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{products.length}</Text>
@@ -150,8 +237,7 @@ export default function OwnerProductManagementScreen({
         </TouchableOpacity>
       </View>
 
-
-      {/* ================= SEARCH ================= */}
+      {/* SEARCH */}
       <View style={styles.searchBox}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
@@ -163,8 +249,7 @@ export default function OwnerProductManagementScreen({
         />
       </View>
 
-
-      {/* ================= LOADING ================= */}
+      {/* LOADING */}
       {loading && (
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color="#75B9C8" />
@@ -172,8 +257,7 @@ export default function OwnerProductManagementScreen({
         </View>
       )}
 
-
-      {/* ================= ERROR ================= */}
+      {/* ERROR */}
       {!loading && error !== '' && (
         <View style={styles.centerBox}>
           <Text style={styles.errorIcon}>⚠️</Text>
@@ -188,8 +272,7 @@ export default function OwnerProductManagementScreen({
         </View>
       )}
 
-
-      {/* ================= EMPTY ================= */}
+      {/* EMPTY */}
       {!loading && error === '' && filteredProducts.length === 0 && (
         <View style={styles.centerBox}>
           <Text style={styles.emptyIcon}>📦</Text>
@@ -199,8 +282,7 @@ export default function OwnerProductManagementScreen({
         </View>
       )}
 
-
-      {/* ================= DANH SÁCH ================= */}
+      {/* LIST */}
       {!loading && error === '' && filteredProducts.length > 0 && (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -208,15 +290,12 @@ export default function OwnerProductManagementScreen({
         >
           {filteredProducts.map((product) => (
             <View key={product.id} style={styles.productCard}>
-
-              {/* ẢNH / EMOJI */}
               <View style={styles.productImage}>
                 <Text style={styles.productEmoji}>
                   {getProductEmoji(product.category_name)}
                 </Text>
               </View>
 
-              {/* THÔNG TIN */}
               <View style={styles.productInfo}>
                 <Text style={styles.productName} numberOfLines={1}>
                   {product.name}
@@ -239,7 +318,6 @@ export default function OwnerProductManagementScreen({
                 </View>
               </View>
 
-              {/* NÚT SỬA / XÓA */}
               <View style={styles.actions}>
                 <TouchableOpacity
                   style={styles.editButton}
@@ -257,26 +335,164 @@ export default function OwnerProductManagementScreen({
                   <Text style={styles.deleteIcon}>🗑️</Text>
                 </TouchableOpacity>
               </View>
-
             </View>
           ))}
         </ScrollView>
       )}
 
+      {/* ================= MODAL SỬA SẢN PHẨM ================= */}
+      <Modal
+        visible={editingProduct !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={closeEditModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={closeEditModal}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCloseIcon}>✕</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.modalTitle}>Sửa sản phẩm</Text>
+
+              <View style={{ width: 42 }} />
+            </View>
+
+            <ScrollView
+              contentContainerStyle={styles.modalBody}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Tên sản phẩm *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="VD: Bánh hạnh nhân"
+                  placeholderTextColor="#9BB8BE"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Mô tả</Text>
+                <TextInput
+                  style={[styles.input, styles.textarea]}
+                  value={editDescription}
+                  onChangeText={setEditDescription}
+                  placeholder="Mô tả sản phẩm"
+                  placeholderTextColor="#9BB8BE"
+                  multiline
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Giá (VNĐ) *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editPrice}
+                  onChangeText={setEditPrice}
+                  placeholder="VD: 135000"
+                  placeholderTextColor="#9BB8BE"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Số lượng tồn kho *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editStock}
+                  onChangeText={setEditStock}
+                  placeholder="VD: 20"
+                  placeholderTextColor="#9BB8BE"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Tên file ảnh (tùy chọn)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editImage}
+                  onChangeText={setEditImage}
+                  placeholder="VD: banh_hanh_nhan.png"
+                  placeholderTextColor="#9BB8BE"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Danh mục *</Text>
+                <View style={styles.categoryRow}>
+                  {CATEGORIES.map((cat) => {
+                    const isActive = editCategoryId === cat.id;
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.categoryChip,
+                          isActive && styles.categoryChipActive,
+                        ]}
+                        onPress={() => setEditCategoryId(cat.id)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                        <Text
+                          style={[
+                            styles.categoryText,
+                            isActive && styles.categoryTextActive,
+                          ]}
+                        >
+                          {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={closeEditModal}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cancelText}>Hủy</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.saveButton,
+                    saving && styles.saveButtonDisabled,
+                  ]}
+                  onPress={handleSaveEdit}
+                  disabled={saving}
+                  activeOpacity={0.8}
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.saveText}>Lưu thay đổi</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FDFF' },
 
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FDFF',
-  },
-
-  /* ================= HEADER ================= */
-
+  /* HEADER */
   header: {
     height: 60,
     paddingHorizontal: 20,
@@ -289,7 +505,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEF7F9',
   },
-
   backButton: {
     width: 42,
     height: 42,
@@ -300,25 +515,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
-
   backIcon: {
-    fontSize: 30,
-    color: '#438A9C',
-    marginTop: -3,
-  },
-
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#356F7C',
-  },
-
+     fontSize: 30,
+     color: '#438A9C',
+     marginTop: -3 },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: '#356F7C'
+ },
   headerRight: {
-    width: 42,
+     width: 42 
   },
 
-  /* ================= STATS ================= */
-
+  /* STATS */
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
@@ -327,7 +537,6 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
   },
-
   statBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
@@ -337,19 +546,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
-
-  statNumber: {
+  statNumber: { 
     fontSize: 20,
     fontWeight: '800',
-    color: '#438A9C',
+    color: '#438A9C' 
   },
-
-  statLabel: {
-    fontSize: 11,
-    color: '#7B9EA5',
-    marginTop: 2,
+  statLabel: { 
+    fontSize: 11, 
+    color: '#7B9EA5', 
+    marginTop: 2 
   },
-
   addButton: {
     flex: 1,
     flexDirection: 'row',
@@ -365,22 +571,19 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-
   addButtonIcon: {
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '800',
     marginTop: -2,
   },
+  addButtonText: { 
+    color: '#FFFFFF', 
+    fontSize: 14, 
+    fontWeight: '700'
+ },
 
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  /* ================= SEARCH ================= */
-
+  /* SEARCH */
   searchBox: {
     height: 46,
     marginHorizontal: 20,
@@ -393,25 +596,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D4EDF2',
   },
+  searchIcon: { fontSize: 16, marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: '#3F6670' },
 
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#3F6670',
-  },
-
-  /* ================= LIST ================= */
-
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-
+  /* LIST */
+  listContent: { paddingHorizontal: 20, paddingBottom: 30 },
   productCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -426,7 +615,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
   },
-
   productImage: {
     width: 60,
     height: 60,
@@ -436,59 +624,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-
-  productEmoji: {
-    fontSize: 30,
+  productEmoji: { 
+    fontSize: 30 
   },
-
-  productInfo: {
-    flex: 1,
-    justifyContent: 'space-between',
+  productInfo: { 
+    flex: 1, 
+    justifyContent: 'space-between' 
   },
-
-  productName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#438A9C',
+  productName: { 
+    fontSize: 14, 
+    fontWeight: '800', 
+    Color: '#438A9C'
+   },
+  productDesc: { 
+    fontSize: 11, 
+    color: '#89A5AA', 
+    marginTop: 2 
   },
-
-  productDesc: {
-    fontSize: 11,
-    color: '#89A5AA',
-    marginTop: 2,
-  },
-
   productMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
     gap: 8,
   },
-
-  productPrice: {
-    fontSize: 13,
+  productPrice: { 
+    fontSize: 13, 
     fontWeight: '800',
-    color: '#438A9C',
-  },
-
+    color: '#438A9C'
+ },
   stockBadge: {
     backgroundColor: '#E8F7FA',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
-
-  stockText: {
-    fontSize: 10,
+  stockText: { 
+    fontSize: 10, 
     fontWeight: '700',
-    color: '#5C929E',
+     color: '#5C929E' 
   },
-
   actions: {
-    justifyContent: 'space-between',
-    marginLeft: 8,
-  },
-
+     justifyContent: 'space-between',
+     marginLeft: 8
+ },
   editButton: {
     width: 32,
     height: 32,
@@ -497,11 +675,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  editIcon: {
-    fontSize: 14,
-  },
-
+  editIcon: { fontSize: 14 },
   deleteButton: {
     width: 32,
     height: 32,
@@ -510,59 +684,192 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  deleteIcon: { fontSize: 14 },
 
-  deleteIcon: {
-    fontSize: 14,
-  },
-
-  /* ================= STATE ================= */
-
+  /* STATES */
   centerBox: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
   },
-
   loadingText: {
-    marginTop: 10,
-    fontSize: 13,
-    color: '#7D9FA7',
+     marginTop: 10, 
+     fontSize: 13, 
+     color: '#7D9FA7'
   },
-
-  errorIcon: {
+  errorIcon: { 
     fontSize: 40,
-    marginBottom: 8,
-  },
-
+    marginBottom: 8 ,
+ },
   errorText: {
     fontSize: 13,
     color: '#7D9FA7',
     textAlign: 'center',
     marginBottom: 16,
   },
-
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 12,
     backgroundColor: '#75B9C8',
   },
-
-  retryText: {
+  retryText: { 
     color: '#FFFFFF',
     fontWeight: '700',
   },
-
   emptyIcon: {
-    fontSize: 60,
-    marginBottom: 12,
+     fontSize: 60, 
+     marginBottom: 12 
   },
-
   emptyText: {
-    fontSize: 14,
-    color: '#89A5AA',
-    textAlign: 'center',
+     fontSize: 14, 
+     color: '#89A5AA', 
+     textAlign: 'center'
+ },
+
+  /* ================= MODAL ================= */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#F8FDFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    paddingTop: 8,
+  },
+  modalHeader: {
+    height: 60,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF7F9',
+  },
+  modalCloseButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D7EEF2',
+  },
+  modalCloseIcon: {
+     fontSize: 20, 
+     color: '#438A9C', 
+     fontWeight: '700' 
+  },
+  modalTitle: {
+     fontSize: 18, 
+     fontWeight: '800', 
+     color: '#356F7C'
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 30,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D7EEF2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelText: { 
+    color: '#438A9C', 
+    fontSize: 15, 
+    fontWeight: '700'
+  },
+  saveButton: {
+    flex: 1.5,
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: '#75B9C8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#5A9EAD',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  saveButtonDisabled: { 
+    opacity: 0.6 
+  },
+  saveText: {
+     color: '#FFFFFF', 
+     fontSize: 15, 
+     fontWeight: '700' 
   },
 
+  inputGroup: { 
+    marginBottom: 16 
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#356F7C',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    minHeight: 50,
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    fontSize: 14,
+    color: '#3F6670',
+    borderWidth: 1,
+    borderColor: '#D5E9ED',
+  },
+  textarea: {
+    minHeight: 80, 
+    paddingTop: 14,
+    textAlignVertical: 'top'
+  },
+  categoryRow: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D7EEF2',
+  },
+  categoryChipActive: { 
+    backgroundColor: '#75B9C8',
+    borderColor: '#75B9C8' 
+  },
+  categoryEmoji: { 
+    fontSize: 16, 
+    marginRight: 6 
+  },
+  categoryText: { 
+    fontSize: 13, 
+    color: '#438A9C', 
+    fontWeight: '600'
+  },
+  categoryTextActive: { 
+    color: '#FFFFFF' 
+  },
 });
