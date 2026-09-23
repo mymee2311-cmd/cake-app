@@ -82,7 +82,7 @@ export default function AddressPicker({
       };
     }
     const formatRegex =
-    /^((số|ngõ|ngách|hẻm|kiệt|tổ|thôn|xóm|ấp|lô|căn|phòng|tầng)\s+)?\d+([\-\/\.]\d+)*[a-zA-Z]?(\s+.+)?$/i;
+    /^((số|ngõ|ngách|hẻm|kiệt|tổ|thôn|xóm|ấp|lô|căn|phòng|tầng)\s+   )?\d+([\-\/\.]\d+)*[a-zA-Z]?(\s+.+)?$/i;
 
   if (!formatRegex.test(trimmed)) {
     return {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AppProvider } from './context/AppContext';
 
@@ -22,40 +23,53 @@ import ProductDetailScreen from './Screen/ProductDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 3,        
+      retry: 1,                        
+      refetchOnWindowFocus: false,     
+      refetchOnMount: false,           
+    },
+  },
+});
+
 export default function App() {
   return (
-    <AppProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Splash"
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Cart" component={CartScreen} />
-          <Stack.Screen name="Checkout" component={CheckOutScreen} />
-          <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
-          <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
-          <Stack.Screen name="Favorites" component={FavoriteScreen} />
-          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="OwnerHome" component={OwnerHomeScreen} />
-          <Stack.Screen
-            name="OwnerProducts"
-            component={OwnerProductManagementScreen}
-          />
-          <Stack.Screen
-            name="OwnerOrders"
-            component={OwnerOrderManagementScreen}
-          />
-          <Stack.Screen name="AddProduct" component={AddProductScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </AppProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="Splash"
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Cart" component={CartScreen} />
+            <Stack.Screen name="Checkout" component={CheckOutScreen} />
+            <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
+            <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+            <Stack.Screen name="Favorites" component={FavoriteScreen} />
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="OwnerHome" component={OwnerHomeScreen} />
+            <Stack.Screen
+              name="OwnerProducts"
+              component={OwnerProductManagementScreen}
+            />
+            <Stack.Screen
+              name="OwnerOrders"
+              component={OwnerOrderManagementScreen}
+            />
+            <Stack.Screen name="AddProduct" component={AddProductScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AppProvider>
+    </QueryClientProvider>
   );
 }

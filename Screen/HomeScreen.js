@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
 
 import { API_URL } from '../utils/api';
 import {
@@ -26,20 +28,17 @@ export default function HomeScreen({ navigation }) {
     openProduct,
   } = useApp();
 
-  const [products, setProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
+  /* ================= FETCH VỚI TANSTACK QUERY ================= */
+  const {
+    data: products = [],
+    isLoading: loading,
+    error,
+    refetch: fetchProducts,
+  } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
       const response = await fetch(`${API_URL}/api/products`);
       const result = await response.json();
 
@@ -47,16 +46,11 @@ export default function HomeScreen({ navigation }) {
         throw new Error(result.error || 'Không thể lấy sản phẩm');
       }
 
-      let data = result.data;
-      if (!data) data = [];
-      setProducts(data);
-    } catch (err) {
-      console.error('Lỗi lấy sản phẩm:', err);
-      setError('Không thể kết nối đến máy chủ. Hãy kiểm tra Backend.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return result.data || [];
+    },
+  });
+
+  /* ================= LOGIC ================= */
 
   const isFavorite = (productId) => {
     if (!favorites || favorites.length === 0) return false;
@@ -197,10 +191,12 @@ export default function HomeScreen({ navigation }) {
         )}
 
         {/* ERROR */}
-        {!loading && error !== '' && (
+        {!loading && error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorIcon}>{UI_EMOJI.retry}</Text>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>
+              {error.message || 'Không thể kết nối đến máy chủ'}
+            </Text>
 
             <TouchableOpacity
               style={styles.retryButton}
@@ -212,7 +208,7 @@ export default function HomeScreen({ navigation }) {
         )}
 
         {/* EMPTY */}
-        {!loading && error === '' && filteredProducts.length === 0 && (
+        {!loading && !error && filteredProducts.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🍰</Text>
             <Text style={styles.emptyText}>
@@ -222,7 +218,7 @@ export default function HomeScreen({ navigation }) {
         )}
 
         {/* PRODUCTS */}
-        {!loading && error === '' && filteredProducts.length > 0 && (
+        {!loading && !error && filteredProducts.length > 0 && (
           <View style={styles.productRow}>
             {filteredProducts.map((product) => (
               <TouchableOpacity
@@ -673,6 +669,7 @@ const styles = StyleSheet.create({
     color: '#7D9FA7',
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
   },
 
   retryButton: {
