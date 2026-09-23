@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   View,
   Text,
@@ -10,8 +11,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { API_URL } from '../utils/api';
-import { useApp } from '../context/AppContext';
+
+
+{/* ==================== CATEGORIES ==================== */}
 
 const CATEGORIES = [
   { id: 1, name: 'Bánh hạt', emoji: '🌰' },
@@ -20,8 +25,30 @@ const CATEGORIES = [
   { id: 4, name: 'Bánh kem', emoji: '🍰' },
 ];
 
+
+{/* ==================== API ==================== */}
+
+const addProductApi = async (payload) => {
+  const response = await fetch(`${API_URL}/api/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || 'Không thể thêm sản phẩm');
+  }
+
+  return result.data;
+};
+
+
+{/* ==================== SCREEN ==================== */}
+
 export default function AddProductScreen({ navigation }) {
-  const { setProductRefreshKey } = useApp();
+  const queryClient = useQueryClient();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -29,65 +56,73 @@ export default function AddProductScreen({ navigation }) {
   const [stock, setStock] = useState('');
   const [image, setImage] = useState('');
   const [categoryId, setCategoryId] = useState(1);
-  const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
+
+  {/* ==================== MUTATION ==================== */}
+
+  const addProductMutation = useMutation({
+    mutationFn: addProductApi,
+
+    onSuccess: () => {
+      Alert.alert('Thành công', 'Đã thêm sản phẩm vào dữ liệu', [
+        {
+          text: 'OK',
+          onPress: () => {
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            navigation.goBack();
+          },
+        },
+      ]);
+    },
+
+    onError: (err) => {
+      console.error('Lỗi thêm sản phẩm:', err);
+      Alert.alert('Lỗi', err.message || 'Không thể kết nối đến máy chủ');
+    },
+  });
+
+
+  {/* ==================== HANDLERS ==================== */}
+
+  const handleSave = () => {
     if (!name.trim()) {
       Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên sản phẩm');
       return;
     }
+
     if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) {
       Alert.alert('Giá không hợp lệ', 'Vui lòng nhập giá sản phẩm');
       return;
     }
+
     if (!stock.trim() || isNaN(Number(stock)) || Number(stock) < 0) {
       Alert.alert('Số lượng không hợp lệ', 'Vui lòng nhập số lượng tồn kho');
       return;
     }
 
-    setSaving(true);
-
-    try {
-      const response = await fetch(`${API_URL}/api/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          description: description.trim(),
-          price: Number(price),
-          stock: Number(stock),
-          image: image.trim(),
-          category_id: categoryId,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Không thể thêm sản phẩm');
-      }
-
-      Alert.alert('Thành công', 'Đã thêm sản phẩm vào database', [
-        {
-          text: 'OK',
-          onPress: () => {
-            setProductRefreshKey((k) => k + 1);
-            navigation.goBack();
-          },
-        },
-      ]);
-    } catch (err) {
-      console.error('Lỗi thêm sản phẩm:', err);
-      Alert.alert('Lỗi', err.message || 'Không thể kết nối đến máy chủ');
-    } finally {
-      setSaving(false);
-    }
+    addProductMutation.mutate({
+      name: name.trim(),
+      description: description.trim(),
+      price: Number(price),
+      stock: Number(stock),
+      image: image.trim(),
+      category_id: categoryId,
+    });
   };
+
+
+  const saving = addProductMutation.isPending;
+
+
+  {/* ==================== RENDER ==================== */}
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
+
+      {/* ============ HEADER ============ */}
+
       <View style={styles.header}>
+
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -96,20 +131,28 @@ export default function AddProductScreen({ navigation }) {
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
 
+
         <Text style={styles.headerTitle}>Thêm sản phẩm</Text>
 
+
         <View style={styles.headerRight} />
+
       </View>
 
-      {/* FORM */}
+
+      {/* ============ FORM ============ */}
+
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+
         {/* TÊN */}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Tên sản phẩm *</Text>
+
           <TextInput
             style={styles.input}
             value={name}
@@ -119,9 +162,12 @@ export default function AddProductScreen({ navigation }) {
           />
         </View>
 
+
         {/* MÔ TẢ */}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Mô tả</Text>
+
           <TextInput
             style={[styles.input, styles.textarea]}
             value={description}
@@ -132,9 +178,12 @@ export default function AddProductScreen({ navigation }) {
           />
         </View>
 
+
         {/* GIÁ */}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Giá (VNĐ) *</Text>
+
           <TextInput
             style={styles.input}
             value={price}
@@ -145,9 +194,12 @@ export default function AddProductScreen({ navigation }) {
           />
         </View>
 
+
         {/* TỒN KHO */}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Số lượng tồn kho *</Text>
+
           <TextInput
             style={styles.input}
             value={stock}
@@ -158,9 +210,12 @@ export default function AddProductScreen({ navigation }) {
           />
         </View>
 
+
         {/* ẢNH */}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Tên file ảnh (tùy chọn)</Text>
+
           <TextInput
             style={styles.input}
             value={image}
@@ -170,13 +225,17 @@ export default function AddProductScreen({ navigation }) {
           />
         </View>
 
+
         {/* DANH MỤC */}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Danh mục *</Text>
 
           <View style={styles.categoryRow}>
+
             {CATEGORIES.map((cat) => {
               const isActive = categoryId === cat.id;
+
               return (
                 <TouchableOpacity
                   key={cat.id}
@@ -188,6 +247,7 @@ export default function AddProductScreen({ navigation }) {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+
                   <Text
                     style={[
                       styles.categoryText,
@@ -199,12 +259,18 @@ export default function AddProductScreen({ navigation }) {
                 </TouchableOpacity>
               );
             })}
+
           </View>
         </View>
 
+
         {/* NÚT LƯU */}
+
         <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            saving && styles.saveButtonDisabled,
+          ]}
           onPress={handleSave}
           disabled={saving}
           activeOpacity={0.7}
@@ -215,16 +281,25 @@ export default function AddProductScreen({ navigation }) {
             <Text style={styles.saveText}>Thêm sản phẩm</Text>
           )}
         </TouchableOpacity>
+
       </ScrollView>
+
     </View>
   );
 }
 
+
+/* ==================== STYLES ==================== */
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#EAF8FB',
   },
+
+
+  /* ============ HEADER ============ */
 
   header: {
     height: 65,
@@ -262,6 +337,9 @@ const styles = StyleSheet.create({
     width: 42,
   },
 
+
+  /* ============ FORM ============ */
+
   content: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -295,6 +373,9 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     textAlignVertical: 'top',
   },
+
+
+  /* ============ CATEGORY ============ */
 
   categoryRow: {
     flexDirection: 'row',
@@ -333,6 +414,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
+
+  /* ============ SAVE BUTTON ============ */
+
   saveButton: {
     height: 54,
     borderRadius: 15,
@@ -341,10 +425,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     shadowColor: '#5A9EAD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -359,4 +440,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+
 });

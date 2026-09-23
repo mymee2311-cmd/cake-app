@@ -44,3 +44,8 @@ mee_bakery.sql
 
 backend/.env
 .env
+# Web admin
+meebakery-admin/node_modules/
+meebakery-admin/dist/
+meebakery-admin/.vite/
+meebakery-admin/.env

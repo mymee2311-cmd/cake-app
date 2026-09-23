@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   View,
   Text,
@@ -11,11 +12,15 @@ import {
   Image,
 } from 'react-native';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { API_URL } from '../utils/api';
 import AddressPicker from '../components/AddressPicker';
 import { useApp } from '../context/AppContext';
 
-/* ================= THÔNG TIN NGÂN HÀNG ================= */
+
+{/* ================= THÔNG TIN NGÂN HÀNG ================= */}
+
 const OWNER_BANK = {
   bankName: 'VietinBank',
   bankCode: 'ICB',
@@ -28,50 +33,123 @@ const OWNER_MOMO = {
   name: 'NGUYEN DUONG HA MY',
 };
 
+
+{/* ================= HELPERS ================= */}
+
+const isValidPhone = (p) => {
+  const cleaned = (p || '').replace(/[\s\-\.]/g, '');
+  return /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(cleaned);
+};
+
+const generateOrderCode = () => {
+  return 'MB' + Math.floor(100000 + Math.random() * 900000);
+};
+
+
+{/* ================= API ================= */}
+
+const createOrderApi = async (payload) => {
+  const response = await fetch(`${API_URL}/api/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || 'Không thể đặt hàng');
+  }
+
+  return result.data;
+};
+
+
+{/* ================= SCREEN ================= */}
+
 export default function CheckoutScreen({ navigation }) {
   const { cart, addOrder, clearCart } = useApp();
+  const queryClient = useQueryClient();
 
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [address, setAddress] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
   const [showAddressPicker, setShowAddressPicker] = useState(false);
+
 
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  /* ================= VALIDATE SĐT ================= */
-  const isValidPhone = (p) => {
-    const cleaned = (p || '').replace(/[\s\-\.]/g, '');
-    return /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(cleaned);
-  };
 
-  /* ================= TẠO QR URL ================= */
+ { /* ================= MUTATION ================= */}
+
+  const createOrderMutation = useMutation({
+    mutationFn: createOrderApi,
+
+    onSuccess: (data, variables) => {
+      const newOrder = {
+        orderCode: variables.order_code,
+        orderId: data.order_id,
+        createdAt: new Date().toISOString(),
+        paymentMethod: variables.payment_method,
+        address: variables.address,
+        name: variables.customer_name,
+        phone: variables.customer_phone,
+        total: variables.total,
+        cartItems: cart,
+        status:
+          variables.payment_method === 'cash'
+            ? 'pending'
+            : 'pending_payment',
+      };
+
+      addOrder(newOrder);
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['owner-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+
+      navigation.navigate('OrderSuccess');
+    },
+
+    onError: (err) => {
+      console.error('Lỗi đặt hàng:', err);
+      Alert.alert('Lỗi', err.message || 'Không thể kết nối máy chủ');
+    },
+  });
+
+
+  {/* ================= QR URL ================= */}
+
   const getBankQrUrl = () => {
     const addInfo = encodeURIComponent('Thanh toan don hang Mee Bakery');
+
     return `https://img.vietqr.io/image/${OWNER_BANK.bankCode}-${OWNER_BANK.accountNumber}-compact2.png?amount=${total}&addInfo=${addInfo}&accountName=${encodeURIComponent(
       OWNER_BANK.accountName
     )}`;
   };
 
-  /* ================= XÁC NHẬN ĐƠN ================= */
-  const handleConfirm = async () => {
+
+ { /* ================= HANDLERS ================= */}
+
+  const handleConfirm = () => {
     if (cart.length === 0) {
       Alert.alert('Giỏ hàng trống!', 'Vui lòng chọn bánh trước');
       return;
     }
+
     if (!name.trim()) {
       Alert.alert('Thiếu tên', 'Vui lòng nhập tên người nhận');
       return;
     }
+
     if (!phone.trim()) {
       Alert.alert('Thiếu SĐT', 'Vui lòng nhập số điện thoại');
       return;
     }
+
     if (!isValidPhone(phone)) {
       Alert.alert(
         'SĐT không hợp lệ',
@@ -79,66 +157,37 @@ export default function CheckoutScreen({ navigation }) {
       );
       return;
     }
+
     if (!address.trim()) {
       Alert.alert('Thiếu địa chỉ', 'Vui lòng chọn địa chỉ giao hàng');
       return;
     }
 
-    setSubmitting(true);
+    const orderCode = generateOrderCode();
 
-    try {
-      const orderCode = 'MB' + Math.floor(100000 + Math.random() * 900000);
+    const items = cart.map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      quantity: Number(item.quantity),
+    }));
 
-      const items = cart.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: Number(item.price),
-        quantity: Number(item.quantity),
-      }));
-
-      const response = await fetch(`${API_URL}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order_code: orderCode,
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          address: address.trim(),
-          payment_method: paymentMethod,
-          total: total,
-          items: items,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Không thể đặt hàng');
-      }
-
-      const newOrder = {
-        orderCode: orderCode,
-        orderId: result.data.order_id,
-        createdAt: new Date().toISOString(),
-        paymentMethod,
-        address: address.trim(),
-        name: name.trim(),
-        phone: phone.trim(),
-        total,
-        cartItems: cart,
-        status: paymentMethod === 'cash' ? 'pending' : 'pending_payment',
-      };
-
-      addOrder(newOrder);
-      clearCart();
-      navigation.navigate('OrderSuccess');
-    } catch (err) {
-      console.error('Lỗi đặt hàng:', err);
-      Alert.alert('Lỗi', err.message || 'Không thể kết nối máy chủ');
-    } finally {
-      setSubmitting(false);
-    }
+    createOrderMutation.mutate({
+      order_code: orderCode,
+      customer_name: name.trim(),
+      customer_phone: phone.trim(),
+      address: address.trim(),
+      payment_method: paymentMethod,
+      total: total,
+      items: items,
+    });
   };
+
+
+  const submitting = createOrderMutation.isPending;
+
+
+  {/* ================= RENDER CART ================= */}
 
   const renderCartItems = () => {
     if (cart.length === 0) {
@@ -147,25 +196,35 @@ export default function CheckoutScreen({ navigation }) {
 
     return cart.map((item, i) => (
       <View key={i} style={styles.itemRow}>
+
         <Text style={styles.itemName}>
           {item.name} x {item.quantity}
         </Text>
+
         <Text style={styles.itemPrice}>
           {(item.price * item.quantity).toLocaleString('vi-VN')}đ
         </Text>
+
       </View>
     ));
   };
 
+
+ {/* ================= RENDER ================= */}
+
   return (
     <View style={styles.container}>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        {/* HEADER */}
+
+        {/* ============ HEADER ============ */}
+
         <View style={styles.header}>
+
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -173,17 +232,26 @@ export default function CheckoutScreen({ navigation }) {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
 
+
           <Text style={styles.headerTitle}>Thanh toán</Text>
 
+
           <View style={{ width: 42 }} />
+
         </View>
 
-        {/* ĐƠN HÀNG */}
+
+        {/* ============ ĐƠN HÀNG ============ */}
+
         <Text style={styles.sectionTitle}>Đơn hàng của bạn</Text>
+
         <View style={styles.card}>{renderCartItems()}</View>
 
-        {/* THÔNG TIN NGƯỜI NHẬN */}
+
+        {/* ============ THÔNG TIN NGƯỜI NHẬN ============ */}
+
         <Text style={styles.sectionTitle}>Thông tin người nhận</Text>
+
 
         <TextInput
           style={styles.input}
@@ -192,6 +260,7 @@ export default function CheckoutScreen({ navigation }) {
           value={name}
           onChangeText={setName}
         />
+
 
         <TextInput
           style={[
@@ -208,18 +277,25 @@ export default function CheckoutScreen({ navigation }) {
           maxLength={15}
         />
 
+
         {phone.trim().length > 0 && !isValidPhone(phone) && (
           <Text style={styles.errorHint}>
             ⚠️ SĐT không hợp lệ (cần 10 số, bắt đầu 03/05/07/08/09)
           </Text>
         )}
 
+
         {phone.trim().length > 0 && isValidPhone(phone) && (
-          <Text style={styles.successHint}>✓ Số điện thoại hợp lệ</Text>
+          <Text style={styles.successHint}>
+            ✓ Số điện thoại hợp lệ
+          </Text>
         )}
 
-        {/* ĐỊA CHỈ */}
+
+        {/* ============ ĐỊA CHỈ ============ */}
+
         <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
+
 
         <TouchableOpacity
           style={[
@@ -229,7 +305,9 @@ export default function CheckoutScreen({ navigation }) {
           onPress={() => setShowAddressPicker(true)}
           activeOpacity={0.8}
         >
+
           <Text style={styles.addressIcon}>📍</Text>
+
           <Text
             style={[
               styles.addressButtonText,
@@ -239,8 +317,11 @@ export default function CheckoutScreen({ navigation }) {
           >
             {address || 'Nhấn để chọn địa chỉ giao hàng'}
           </Text>
+
           <Text style={styles.addressArrow}>›</Text>
+
         </TouchableOpacity>
+
 
         <AddressPicker
           visible={showAddressPicker}
@@ -251,48 +332,66 @@ export default function CheckoutScreen({ navigation }) {
           }}
         />
 
-        {/* PHƯƠNG THỨC THANH TOÁN */}
+
+        {/* ============ PHƯƠNG THỨC THANH TOÁN ============ */}
+
         <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+
         <View style={styles.card}>
+
           <TouchableOpacity
             style={styles.methodRow}
             onPress={() => setPaymentMethod('cash')}
           >
             <Text style={styles.methodText}>💵  Tiền mặt</Text>
+
             <Text style={styles.radio}>
               {paymentMethod === 'cash' ? '●' : '○'}
             </Text>
           </TouchableOpacity>
 
+
           <View style={styles.divider} />
+
 
           <TouchableOpacity
             style={styles.methodRow}
             onPress={() => setPaymentMethod('bank')}
           >
             <Text style={styles.methodText}>🏦  Chuyển khoản</Text>
+
             <Text style={styles.radio}>
               {paymentMethod === 'bank' ? '●' : '○'}
             </Text>
           </TouchableOpacity>
 
+
           <View style={styles.divider} />
+
 
           <TouchableOpacity
             style={styles.methodRow}
             onPress={() => setPaymentMethod('momo')}
           >
             <Text style={styles.methodText}>📱  Momo</Text>
+
             <Text style={styles.radio}>
               {paymentMethod === 'momo' ? '●' : '○'}
             </Text>
           </TouchableOpacity>
+
         </View>
 
-        {/* QR CHUYỂN KHOẢN */}
+
+        {/* ============ QR CHUYỂN KHOẢN ============ */}
+
         {paymentMethod === 'bank' && (
           <View style={styles.qrBox}>
-            <Text style={styles.qrTitle}>🏦 Quét mã để chuyển khoản</Text>
+
+            <Text style={styles.qrTitle}>
+              🏦 Quét mã để chuyển khoản
+            </Text>
+
 
             <Image
               source={{ uri: getBankQrUrl() }}
@@ -300,21 +399,32 @@ export default function CheckoutScreen({ navigation }) {
               resizeMode="contain"
             />
 
+
             <View style={styles.bankInfo}>
+
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Ngân hàng:</Text>
-                <Text style={styles.bankValue}>{OWNER_BANK.bankName}</Text>
+                <Text style={styles.bankValue}>
+                  {OWNER_BANK.bankName}
+                </Text>
               </View>
+
 
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Số TK:</Text>
-                <Text style={styles.bankValue}>{OWNER_BANK.accountNumber}</Text>
+                <Text style={styles.bankValue}>
+                  {OWNER_BANK.accountNumber}
+                </Text>
               </View>
+
 
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Chủ TK:</Text>
-                <Text style={styles.bankValue}>{OWNER_BANK.accountName}</Text>
+                <Text style={styles.bankValue}>
+                  {OWNER_BANK.accountName}
+                </Text>
               </View>
+
 
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Số tiền:</Text>
@@ -322,66 +432,103 @@ export default function CheckoutScreen({ navigation }) {
                   {total.toLocaleString('vi-VN')}đ
                 </Text>
               </View>
+
             </View>
+
 
             <Text style={styles.qrHint}>
               💡 Mở app ngân hàng → Quét mã → Kiểm tra số tiền → Xác nhận
             </Text>
+
           </View>
         )}
 
-        {/* MOMO */}
+
+        {/* ============ MOMO ============ */}
+
         {paymentMethod === 'momo' && (
           <View style={styles.qrBox}>
-            <Text style={styles.qrTitle}>📱 Thanh toán qua Momo</Text>
+
+            <Text style={styles.qrTitle}>
+              📱 Thanh toán qua Momo
+            </Text>
+
 
             <View style={styles.momoInfo}>
+
               <Text style={styles.momoText}>Mở app Momo</Text>
-              <Text style={styles.momoText}>→ Chọn "Chuyển tiền"</Text>
+
+              <Text style={styles.momoText}>
+                → Chọn "Chuyển tiền"
+              </Text>
+
               <Text style={styles.momoText}>
                 → Nhập SĐT:{' '}
                 <Text style={styles.momoPhone}>{OWNER_MOMO.phone}</Text>
               </Text>
+
               <Text style={styles.momoText}>
                 → Số tiền:{' '}
                 <Text style={styles.momoAmount}>
                   {total.toLocaleString('vi-VN')}đ
                 </Text>
               </Text>
+
               <Text style={styles.momoText}>
                 → Nội dung: Thanh toan don hang
               </Text>
+
             </View>
+
 
             <Text style={styles.qrHint}>
               💡 Sau khi chuyển khoản, nhấn "Xác nhận thanh toán"
             </Text>
+
           </View>
         )}
 
-        {/* TỔNG TIỀN */}
+
+        {/* ============ TỔNG TIỀN ============ */}
+
         <View style={styles.totalRow}>
+
           <Text style={styles.totalLabel}>Tổng tiền</Text>
+
           <Text style={styles.totalValue}>
             {total.toLocaleString('vi-VN')}đ
           </Text>
+
         </View>
 
-        {/* CẢNH BÁO */}
+
+        {/* ============ CẢNH BÁO ============ */}
+
         {paymentMethod !== 'cash' && (
           <View style={styles.warningBox}>
+
             <Text style={styles.warningIcon}>⚠️</Text>
+
             <Text style={styles.warningText}>
               Sau khi nhấn "Tôi đã chuyển khoản", đơn sẽ ở trạng thái{' '}
-              <Text style={styles.warningBold}>chờ shop nhận tiền</Text>.{'\n'}
+              <Text style={styles.warningBold}>
+                chờ shop nhận tiền
+              </Text>
+              .{'\n'}
               Shop sẽ kiểm tra và xác nhận trong vài phút.
             </Text>
+
           </View>
         )}
 
-        {/* NÚT XÁC NHẬN */}
+
+        {/* ============ NÚT XÁC NHẬN ============ */}
+
         <TouchableOpacity
-          style={[styles.confirmButton, submitting && { opacity: 0.6 }]}
+          style={[
+            styles.confirmButton,
+            submitting && { opacity: 0.6 },
+          ]}
           onPress={handleConfirm}
           disabled={submitting}
           activeOpacity={0.8}
@@ -396,13 +543,18 @@ export default function CheckoutScreen({ navigation }) {
             </Text>
           )}
         </TouchableOpacity>
+
       </ScrollView>
+
     </View>
   );
 }
 
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#EAF8FB',
@@ -412,6 +564,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 35,
   },
+
+
+  /* ============ HEADER ============ */
 
   header: {
     height: 65,
@@ -444,6 +599,9 @@ const styles = StyleSheet.create({
     color: '#356F7C',
   },
 
+
+  /* ============ COMMON ============ */
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
@@ -459,6 +617,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#E7F2F4',
+  },
+
+
+  /* ============ CART ============ */
 
   emptyText: {
     color: '#89A5AA',
@@ -484,6 +650,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#438A9C',
   },
+
+
+  /* ============ INPUT ============ */
 
   input: {
     minHeight: 52,
@@ -524,6 +693,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '600',
   },
+
+
+  /* ============ ADDRESS ============ */
 
   addressButton: {
     flexDirection: 'row',
@@ -567,6 +739,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+
+  /* ============ PAYMENT METHOD ============ */
+
   methodRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -584,10 +759,8 @@ const styles = StyleSheet.create({
     color: '#438A9C',
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: '#E7F2F4',
-  },
+
+  /* ============ QR BOX ============ */
 
   qrBox: {
     marginTop: 14,
@@ -598,10 +771,7 @@ const styles = StyleSheet.create({
     borderColor: '#75B9C8',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3,
@@ -621,6 +791,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 12,
   },
+
+  qrHint: {
+    fontSize: 11,
+    color: '#7B9EA5',
+    textAlign: 'center',
+    marginTop: 12,
+    fontStyle: 'italic',
+    paddingHorizontal: 10,
+  },
+
+
+  /* ============ BANK INFO ============ */
 
   bankInfo: {
     width: '100%',
@@ -660,14 +842,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 
-  qrHint: {
-    fontSize: 11,
-    color: '#7B9EA5',
-    textAlign: 'center',
-    marginTop: 12,
-    fontStyle: 'italic',
-    paddingHorizontal: 10,
-  },
+
+  /* ============ MOMO INFO ============ */
 
   momoInfo: {
     width: '100%',
@@ -695,6 +871,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+
+  /* ============ WARNING ============ */
+
   warningBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -721,6 +900,9 @@ const styles = StyleSheet.create({
   warningBold: {
     fontWeight: '800',
   },
+
+
+  /* ============ TOTAL + CONFIRM ============ */
 
   totalRow: {
     flexDirection: 'row',
@@ -750,10 +932,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -764,4 +943,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,38 +9,26 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+import { useQuery } from '@tanstack/react-query';
+
 import { API_URL } from '../utils/api';
 
 export default function OrderHistoryScreen({ navigation }) {
-  const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const response = await fetch(`${API_URL}/api/orders`);
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Không thể lấy đơn');
-      }
-
-      setOrders(result.data || []);
-    } catch (err) {
-      console.error('Lỗi lấy đơn:', err);
-      setError('Không thể kết nối máy chủ');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: orders = [],
+    isLoading: loading,
+    error,
+    refetch: fetchOrders,
+  } = useQuery({
+    queryKey: ['my-orders'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/orders`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data || [];
+    },
+  });
 
   const formatPrice = (price) => {
     return Number(price).toLocaleString('vi-VN') + 'đ';
@@ -135,10 +123,7 @@ export default function OrderHistoryScreen({ navigation }) {
     const statusInfo = getStatusInfo(item.status);
 
     return (
-      <TouchableOpacity
-        style={styles.orderCard}
-        activeOpacity={0.8}
-      >
+      <TouchableOpacity style={styles.orderCard} activeOpacity={0.8}>
         <View style={styles.orderHeader}>
           <View>
             <Text style={styles.orderCode}>
@@ -222,13 +207,15 @@ export default function OrderHistoryScreen({ navigation }) {
     );
   }
 
-  if (error !== '') {
+  if (error) {
     return (
       <View style={styles.container}>
         {renderHeader()}
         <View style={styles.noResultContainer}>
           <Text style={styles.noResultIcon}>⚠️</Text>
-          <Text style={styles.noResultText}>{error}</Text>
+          <Text style={styles.noResultText}>
+            {error.message || 'Không thể kết nối máy chủ'}
+          </Text>
 
           <TouchableOpacity
             style={styles.backToShopButton}

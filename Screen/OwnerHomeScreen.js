@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,37 +9,41 @@ import {
   Alert,
 } from 'react-native';
 
+import { useQuery } from '@tanstack/react-query';
+
 import { API_URL } from '../utils/api';
 
 export default function OwnerHomeScreen({ navigation }) {
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: orders = [],
+    isLoading: loadingOrders,
+    error: errorOrders,
+  } = useQuery({
+    queryKey: ['owner-orders'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/orders`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data || [];
+    },
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const {
+    data: products = [],
+    isLoading: loadingProducts,
+    error: errorProducts,
+  } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/products`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data || [];
+    },
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-
-      const [ordersRes, productsRes] = await Promise.all([
-        fetch(`${API_URL}/api/orders`),
-        fetch(`${API_URL}/api/products`),
-      ]);
-
-      const ordersData = await ordersRes.json();
-      const productsData = await productsRes.json();
-
-      if (ordersData.success) setOrders(ordersData.data || []);
-      if (productsData.success) setProducts(productsData.data || []);
-    } catch (err) {
-      console.error('Lỗi fetch data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingOrders || loadingProducts;
+  const error = errorOrders || errorProducts;
 
   const revenue = orders
     .filter((o) => o.status === 'completed')
@@ -71,19 +75,53 @@ export default function OwnerHomeScreen({ navigation }) {
   };
 
   const getStatusInfo = (status) => {
-    if (status === 'pending_payment')
-      return { label: '💰 Chờ nhận tiền', bg: '#FFE8F0', color: '#D6336C' };
-    if (status === 'pending')
-      return { label: 'Chờ xác nhận', bg: '#FFF3D8', color: '#C28A32' };
-    if (status === 'confirmed')
-      return { label: 'Đã xác nhận', bg: '#E3F7EA', color: '#4D9B68' };
-    if (status === 'delivering')
-      return { label: 'Đang giao', bg: '#E8F0FE', color: '#4A6DB5' };
-    if (status === 'completed')
-      return { label: 'Hoàn thành', bg: '#E3F7EA', color: '#4D9B68' };
-    if (status === 'cancelled')
-      return { label: 'Đã hủy', bg: '#FFEAEA', color: '#D14B4B' };
-    return { label: status, bg: '#F0F0F0', color: '#888' };
+    if (status === 'pending_payment') {
+      return {
+        label: '💰 Chờ nhận tiền',
+        bg: '#FFE8F0',
+        color: '#D6336C',
+      };
+    }
+    if (status === 'pending') {
+      return {
+        label: 'Chờ xác nhận',
+        bg: '#FFF3D8',
+        color: '#C28A32',
+      };
+    }
+    if (status === 'confirmed') {
+      return {
+        label: 'Đã xác nhận',
+        bg: '#E3F7EA',
+        color: '#4D9B68',
+      };
+    }
+    if (status === 'delivering') {
+      return {
+        label: 'Đang giao',
+        bg: '#E8F0FE',
+        color: '#4A6DB5',
+      };
+    }
+    if (status === 'completed') {
+      return {
+        label: 'Hoàn thành',
+        bg: '#E3F7EA',
+        color: '#4D9B68',
+      };
+    }
+    if (status === 'cancelled') {
+      return {
+        label: 'Đã hủy',
+        bg: '#FFEAEA',
+        color: '#D14B4B',
+      };
+    }
+    return {
+      label: status,
+      bg: '#F0F0F0',
+      color: '#888',
+    };
   };
 
   const getOrderEmoji = (index) => {
@@ -218,7 +256,9 @@ export default function OwnerHomeScreen({ navigation }) {
         {/* ĐƠN HÀNG MỚI */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Đơn hàng mới</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('OwnerOrders')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('OwnerOrders')}
+          >
             <Text style={styles.viewAll}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
@@ -231,8 +271,18 @@ export default function OwnerHomeScreen({ navigation }) {
           </View>
         )}
 
+        {/* ERROR */}
+        {!loading && error && (
+          <View style={styles.centerBox}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyText}>
+              {error.message || 'Không thể kết nối máy chủ'}
+            </Text>
+          </View>
+        )}
+
         {/* EMPTY */}
-        {!loading && recentOrders.length === 0 && (
+        {!loading && !error && recentOrders.length === 0 && (
           <View style={styles.centerBox}>
             <Text style={styles.emptyIcon}>📦</Text>
             <Text style={styles.emptyText}>Chưa có đơn hàng nào</Text>
@@ -241,6 +291,7 @@ export default function OwnerHomeScreen({ navigation }) {
 
         {/* DANH SÁCH ĐƠN */}
         {!loading &&
+          !error &&
           recentOrders.map((order, index) => {
             const statusInfo = getStatusInfo(order.status);
             return (
@@ -278,7 +329,10 @@ export default function OwnerHomeScreen({ navigation }) {
                   ]}
                 >
                   <Text
-                    style={[styles.statusText, { color: statusInfo.color }]}
+                    style={[
+                      styles.statusText,
+                      { color: statusInfo.color },
+                    ]}
                   >
                     {statusInfo.label}
                   </Text>

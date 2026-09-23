@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,12 @@ import {
   Modal,
 } from 'react-native';
 
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+
 import { API_URL } from '../utils/api';
 
 const CATEGORIES = [
@@ -21,11 +27,8 @@ const CATEGORIES = [
 ];
 
 export default function OwnerProductManagementScreen({ navigation }) {
-  const [products, setProducts] = useState([]);
+  const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -33,39 +36,67 @@ export default function OwnerProductManagementScreen({ navigation }) {
   const [editStock, setEditStock] = useState('');
   const [editImage, setEditImage] = useState('');
   const [editCategoryId, setEditCategoryId] = useState(1);
-  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchProducts();
-    });
+  const {
+    data: products = [],
+    isLoading: loading,
+    error,
+    refetch: fetchProducts,
+  } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/products`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json.data || [];
+    },
+  });
 
-    return unsubscribe;
-  }, [navigation]);
+  /* ================= DELETE MUTATION ================= */
+  const deleteMutation = useMutation({
+    mutationFn: async (productId) => {
+      const res = await fetch(`${API_URL}/api/products/${productId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      Alert.alert('Thành công', 'Đã xóa sản phẩm');
+    },
+    onError: (err) => {
+      Alert.alert('Lỗi', err.message || 'Không thể xóa');
+    },
+  });
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      setError('');
+  /* ================= UPDATE MUTATION ================= */
+  const updateMutation = useMutation({
+    mutationFn: async (productData) => {
+      const res = await fetch(
+        `${API_URL}/api/products/${productData.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData),
+        }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      Alert.alert('Thành công', 'Đã cập nhật sản phẩm!');
+      closeEditModal();
+    },
+    onError: (err) => {
+      Alert.alert('Lỗi', err.message || 'Không thể cập nhật');
+    },
+  });
 
-      const response = await fetch(`${API_URL}/api/products`);
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Không thể lấy sản phẩm');
-      }
-
-      let data = result.data;
-      if (!data) data = [];
-      setProducts(data);
-    } catch (err) {
-      console.error('Lỗi lấy sản phẩm:', err);
-      setError('Không thể kết nối máy chủ.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  /* ================= FORMAT ================= */
   const formatPrice = (price) => {
     return Number(price).toLocaleString('vi-VN') + 'đ';
   };
@@ -78,6 +109,7 @@ export default function OwnerProductManagementScreen({ navigation }) {
     return '🌰';
   };
 
+  /* ================= FILTER ================= */
   let filteredProducts = products;
   const keyword = searchText.toLowerCase().trim();
 
@@ -107,26 +139,7 @@ export default function OwnerProductManagementScreen({ navigation }) {
         {
           text: 'Xóa',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              const response = await fetch(
-                `${API_URL}/api/products/${product.id}`,
-                { method: 'DELETE' }
-              );
-
-              const result = await response.json();
-
-              if (!response.ok || !result.success) {
-                throw new Error(result.error || 'Không thể xóa');
-              }
-
-              Alert.alert('Thành công', 'Đã xóa sản phẩm');
-              fetchProducts();
-            } catch (err) {
-              console.error('Lỗi xóa:', err);
-              Alert.alert('Lỗi', err.message || 'Không thể kết nối');
-            }
-          },
+          onPress: () => deleteMutation.mutate(product.id),
         },
       ]
     );
@@ -147,7 +160,8 @@ export default function OwnerProductManagementScreen({ navigation }) {
     setEditingProduct(null);
   };
 
-  const handleSaveEdit = async () => {
+  /* ================= SAVE EDIT ================= */
+  const handleSaveEdit = () => {
     if (!editName.trim()) {
       Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên sản phẩm');
       return;
@@ -169,40 +183,15 @@ export default function OwnerProductManagementScreen({ navigation }) {
       return;
     }
 
-    setSaving(true);
-
-    try {
-      const response = await fetch(
-        `${API_URL}/api/products/${editingProduct.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: editName.trim(),
-            description: editDescription.trim(),
-            price: Number(editPrice),
-            stock: Number(editStock),
-            image: editImage.trim(),
-            category_id: editCategoryId,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Không thể cập nhật');
-      }
-
-      Alert.alert('Thành công', 'Đã cập nhật sản phẩm!');
-      closeEditModal();
-      fetchProducts();
-    } catch (err) {
-      console.error('Lỗi cập nhật:', err);
-      Alert.alert('Lỗi', err.message || 'Không thể kết nối máy chủ');
-    } finally {
-      setSaving(false);
-    }
+    updateMutation.mutate({
+      id: editingProduct.id,
+      name: editName.trim(),
+      description: editDescription.trim(),
+      price: Number(editPrice),
+      stock: Number(editStock),
+      image: editImage.trim(),
+      category_id: editCategoryId,
+    });
   };
 
   return (
@@ -260,10 +249,12 @@ export default function OwnerProductManagementScreen({ navigation }) {
       )}
 
       {/* ERROR */}
-      {!loading && error !== '' && (
+      {!loading && error && (
         <View style={styles.centerBox}>
           <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>
+            {error.message || 'Không thể kết nối máy chủ'}
+          </Text>
 
           <TouchableOpacity
             style={styles.retryButton}
@@ -275,7 +266,7 @@ export default function OwnerProductManagementScreen({ navigation }) {
       )}
 
       {/* EMPTY */}
-      {!loading && error === '' && filteredProducts.length === 0 && (
+      {!loading && !error && filteredProducts.length === 0 && (
         <View style={styles.centerBox}>
           <Text style={styles.emptyIcon}>📦</Text>
           <Text style={styles.emptyText}>
@@ -285,7 +276,7 @@ export default function OwnerProductManagementScreen({ navigation }) {
       )}
 
       {/* LIST */}
-      {!loading && error === '' && filteredProducts.length > 0 && (
+      {!loading && !error && filteredProducts.length > 0 && (
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
@@ -472,13 +463,13 @@ export default function OwnerProductManagementScreen({ navigation }) {
                 <TouchableOpacity
                   style={[
                     styles.saveButton,
-                    saving && styles.saveButtonDisabled,
+                    updateMutation.isPending && styles.saveButtonDisabled,
                   ]}
                   onPress={handleSaveEdit}
-                  disabled={saving}
+                  disabled={updateMutation.isPending}
                   activeOpacity={0.8}
                 >
-                  {saving ? (
+                  {updateMutation.isPending ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
                     <Text style={styles.saveText}>Lưu thay đổi</Text>
@@ -500,7 +491,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FDFF',
   },
 
-  /* HEADER */
   header: {
     height: 60,
     paddingHorizontal: 20,
@@ -541,7 +531,6 @@ const styles = StyleSheet.create({
     width: 42,
   },
 
-  /* STATS */
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
@@ -605,7 +594,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* SEARCH */
   searchBox: {
     height: 46,
     marginHorizontal: 20,
@@ -630,7 +618,6 @@ const styles = StyleSheet.create({
     color: '#3F6670',
   },
 
-  /* LIST */
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 30,
@@ -742,7 +729,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  /* STATES */
   centerBox: {
     flex: 1,
     alignItems: 'center',
@@ -791,7 +777,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
