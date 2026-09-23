@@ -9,6 +9,12 @@ import {
   Easing,
 } from 'react-native';
 
+import{
+  getProductEmoji,
+  formatPrice,
+  UI_EMOJI,
+} from '../utils/emoji';
+
 export default function OrderSuccessScreen({
   orderInfo,
   onGoHome,

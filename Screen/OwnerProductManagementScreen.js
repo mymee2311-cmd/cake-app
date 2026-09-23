@@ -29,7 +29,6 @@ export default function OwnerProductManagementScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // ===== MODAL SỬA =====
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -135,7 +134,7 @@ export default function OwnerProductManagementScreen({
     );
   };
 
-  // ===== EDIT — MỞ MODAL =====
+  // ===== EDIT  =====
   const handleEdit = (product) => {
     setEditingProduct(product);
     setEditName(product.name || '');
