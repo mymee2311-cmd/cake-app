@@ -8,18 +8,12 @@ import {
   Alert,
 } from 'react-native';
 
-import {
-  formatPrice,
-  UI_EMOJI,
-} from '../utils/emoji';
+import { formatPrice, UI_EMOJI } from '../utils/emoji';
+import { useApp } from '../context/AppContext';
 
-export default function CartScreen({
-  cart = [],
-  onBack,
-  onUpdateQuantity,
-  onRemoveItem,
-  onGoToCheckout,
-}) {
+export default function CartScreen({ navigation }) {
+  const { cart, updateQuantity, removeItem } = useApp();
+
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -32,7 +26,7 @@ export default function CartScreen({
 
   /* ============ XỬ LÝ ============= */
   const handleIncrease = (item) => {
-    onUpdateQuantity && onUpdateQuantity(item.id, item.quantity + 1);
+    updateQuantity(item.id, item.quantity + 1);
   };
 
   const handleDecrease = (item) => {
@@ -40,7 +34,7 @@ export default function CartScreen({
       handleRemove(item);
       return;
     }
-    onUpdateQuantity && onUpdateQuantity(item.id, item.quantity - 1);
+    updateQuantity(item.id, item.quantity - 1);
   };
 
   const handleRemove = (item) => {
@@ -52,22 +46,18 @@ export default function CartScreen({
         {
           text: 'Xóa',
           style: 'destructive',
-          onPress: () => onRemoveItem && onRemoveItem(item.id),
+          onPress: () => removeItem(item.id),
         },
       ]
     );
   };
 
-  const handleCheckout = () => {
-    onGoToCheckout && onGoToCheckout();
-  };
-
-  /*============ HEADER ============*/
+  /* ============ HEADER ============ */
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={onBack}
+        onPress={() => navigation.goBack()}
         activeOpacity={0.7}
       >
         <Text style={styles.backIcon}>{UI_EMOJI.back}</Text>
@@ -85,7 +75,7 @@ export default function CartScreen({
     </View>
   );
 
-  /* ============  EMPTY CART ============  */
+  /* ============ EMPTY CART ============ */
   if (cart.length === 0) {
     return (
       <View style={styles.container}>
@@ -102,7 +92,7 @@ export default function CartScreen({
 
           <TouchableOpacity
             style={styles.backToShopButton}
-            onPress={onBack}
+            onPress={() => navigation.navigate('Home')}
             activeOpacity={0.8}
           >
             <Text style={styles.backToShopText}>Tiếp tục mua sắm</Text>
@@ -112,7 +102,7 @@ export default function CartScreen({
     );
   }
 
-  /* ============  CART LIST ============   */
+  /* ============ CART LIST ============ */
   return (
     <View style={styles.container}>
       {renderHeader()}
@@ -187,7 +177,7 @@ export default function CartScreen({
         </ScrollView>
       </View>
 
-      {/* ================= BOTTOM SUMMARY ================= */}
+      {/* BOTTOM SUMMARY */}
       <View style={styles.bottomBar}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>
@@ -210,11 +200,11 @@ export default function CartScreen({
 
         <TouchableOpacity
           style={styles.checkoutButton}
-          onPress={handleCheckout}
+          onPress={() => navigation.navigate('Checkout')}
           activeOpacity={0.8}
         >
           <Text style={styles.checkoutText}>Tiến hành thanh toán</Text>
-          <Text style={styles.checkoutArrow}>{UI_EMOJI.back === '‹' ? '›' : '›'}</Text>
+          <Text style={styles.checkoutArrow}>›</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -223,13 +213,10 @@ export default function CartScreen({
 
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#F8FDFF',
   },
-
-  /* ============ HEADER ============  */
 
   header: {
     height: 65,
@@ -239,8 +226,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#F8FDFF',
-    zIndex: 10,
-    elevation: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#EEF7F9',
     marginBottom: 8,
@@ -292,7 +277,6 @@ const styles = StyleSheet.create({
 
   listWrapper: {
     flex: 1,
-    zIndex: 1,
   },
 
   listContent: {
@@ -310,7 +294,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DDEFF3',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 5,
     elevation: 2,
@@ -403,8 +390,6 @@ const styles = StyleSheet.create({
     color: '#438A9C',
   },
 
-  /* ================= EMPTY ================= */
-
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -437,7 +422,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#75B9C8',
     borderRadius: 14,
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -449,8 +437,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* ============  BOTTOM BAR ============  */
-
   bottomBar: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
@@ -461,11 +447,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#E7F2F4',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: -3 },
+    shadowOffset: {
+      width: 0,
+      height: -3,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
-    zIndex: 5,
   },
 
   summaryRow: {
@@ -513,7 +501,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 14,
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -532,5 +523,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginTop: -3,
   },
-
 });

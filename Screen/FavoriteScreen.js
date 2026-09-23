@@ -12,38 +12,34 @@ import {
   formatPrice,
   UI_EMOJI,
 } from '../utils/emoji';
+import { useApp } from '../context/AppContext';
 
-export default function FavoriteScreen({
-  favorites = [],
-  onBack,
-  onAddToCart,
-  onRemoveFavorite,
-  onGoToProduct,
-}) {
-  /* ============ XỬ LÝ ============*/
+export default function FavoriteScreen({ navigation }) {
+  const {
+    favorites,
+    removeFavorite,
+    addToCart,
+    openProduct,
+  } = useApp();
+
   const handleRemove = (item) => {
-    if (onRemoveFavorite) {
-      onRemoveFavorite(item.id);
-    }
+    removeFavorite(item.id);
   };
 
   const handleAddToCart = (item) => {
-    if (onAddToCart) {
-      onAddToCart({
-        id: item.id,
-        name: item.name,
-        price: Number(item.price),
-        emoji: getProductEmoji(item.category_name),
-      });
-    }
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      emoji: getProductEmoji(item.category_name),
+    });
   };
 
-  /* ============ HEADER ============ */
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={onBack}
+        onPress={() => navigation.navigate('Home')}
         activeOpacity={0.7}
       >
         <Text style={styles.backIcon}>{UI_EMOJI.back}</Text>
@@ -63,7 +59,6 @@ export default function FavoriteScreen({
     </View>
   );
 
-  /* ============ EMPTY ============ */
   if (favorites.length === 0) {
     return (
       <View style={styles.container}>
@@ -82,7 +77,7 @@ export default function FavoriteScreen({
 
           <TouchableOpacity
             style={styles.backToShopButton}
-            onPress={onBack}
+            onPress={() => navigation.navigate('Home')}
             activeOpacity={0.8}
           >
             <Text style={styles.backToShopText}>
@@ -94,7 +89,6 @@ export default function FavoriteScreen({
     );
   }
 
-  /* ============ LIST ============ */
   return (
     <View style={styles.container}>
       {renderHeader()}
@@ -109,7 +103,8 @@ export default function FavoriteScreen({
             <TouchableOpacity
               style={styles.itemImage}
               onPress={() => {
-                if (onGoToProduct) onGoToProduct(item);
+                openProduct(item);
+                navigation.navigate('ProductDetail');
               }}
               activeOpacity={0.8}
             >
@@ -135,7 +130,6 @@ export default function FavoriteScreen({
 
             {/* ACTIONS */}
             <View style={styles.itemRight}>
-              {/* NÚT XÓA KHỎI YÊU THÍCH */}
               <TouchableOpacity
                 style={styles.heartButton}
                 onPress={() => handleRemove(item)}
@@ -146,7 +140,6 @@ export default function FavoriteScreen({
                 </Text>
               </TouchableOpacity>
 
-              {/* NÚT THÊM VÀO GIỎ */}
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => handleAddToCart(item)}
@@ -166,13 +159,10 @@ export default function FavoriteScreen({
 
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#F8FDFF',
   },
-
-  /* ============ HEADER ============ */
 
   header: {
     height: 65,
@@ -230,8 +220,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* ============ LIST ============ */
-
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -247,7 +235,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DDEFF3',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 5,
     elevation: 2,
@@ -323,8 +314,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  /* ================= EMPTY ================= */
-
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -360,7 +349,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#75B9C8',
     borderRadius: 14,
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -371,5 +363,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-
 });

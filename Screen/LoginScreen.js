@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-export default function LoginScreen({ onLogin, onBack }) {
+export default function LoginScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
@@ -24,11 +24,10 @@ export default function LoginScreen({ onLogin, onBack }) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-
         {/* NÚT BACK */}
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => navigation.navigate('Home')}
           activeOpacity={0.7}
         >
           <Text style={styles.backIcon}>‹</Text>
@@ -40,15 +39,11 @@ export default function LoginScreen({ onLogin, onBack }) {
         </View>
 
         {/* TIÊU ĐỀ */}
-        <Text style={styles.title}>
-          Welcome Back!
-        </Text>
+        <Text style={styles.title}>Welcome Back!</Text>
 
         {/* SỐ ĐIỆN THOẠI */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>
-            Số điện thoại
-          </Text>
+          <Text style={styles.label}>Số điện thoại</Text>
 
           <TextInput
             style={styles.input}
@@ -64,9 +59,7 @@ export default function LoginScreen({ onLogin, onBack }) {
 
         {/* MẬT KHẨU */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>
-            Mật khẩu
-          </Text>
+          <Text style={styles.label}>Mật khẩu</Text>
 
           <TextInput
             style={styles.input}
@@ -85,22 +78,17 @@ export default function LoginScreen({ onLogin, onBack }) {
           style={styles.forgot}
           activeOpacity={0.7}
         >
-          <Text style={styles.forgotText}>
-            Quên mật khẩu?
-          </Text>
+          <Text style={styles.forgotText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
 
         {/* ĐĂNG NHẬP */}
         <TouchableOpacity
           style={styles.loginButton}
-          onPress={onLogin}
+          onPress={() => navigation.navigate('OwnerHome')}
           activeOpacity={0.7}
         >
-          <Text style={styles.loginText}>
-            Đăng nhập
-          </Text>
+          <Text style={styles.loginText}>Đăng nhập</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -125,19 +113,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     left: 20,
-
     width: 42,
     height: 42,
     borderRadius: 21,
-
     backgroundColor: '#FFFFFF',
-
     justifyContent: 'center',
     alignItems: 'center',
-
     borderWidth: 1,
     borderColor: '#D4EDF2',
-
     shadowColor: '#7DB6C2',
     shadowOffset: {
       width: 0,
@@ -145,7 +128,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-
     elevation: 3,
   },
 
@@ -161,15 +143,11 @@ const styles = StyleSheet.create({
     width: 95,
     height: 95,
     borderRadius: 48,
-
     backgroundColor: '#FFFFFF',
-
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-
     marginBottom: 25,
-
     shadowColor: '#7DB6C2',
     shadowOffset: {
       width: 0,
@@ -177,7 +155,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.18,
     shadowRadius: 8,
-
     elevation: 4,
   },
 
@@ -189,12 +166,9 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: 'center',
-
     fontSize: 28,
     fontWeight: '800',
-
     color: '#438A9C',
-
     marginBottom: 35,
   },
 
@@ -207,24 +181,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-
     color: '#438A9C',
-
     marginBottom: 8,
   },
 
   input: {
     height: 52,
-
     backgroundColor: '#FFFFFF',
-
     borderRadius: 14,
-
     paddingHorizontal: 16,
-
     fontSize: 14,
     color: '#3F6670',
-
     borderWidth: 1,
     borderColor: '#C9E8EE',
   },
@@ -233,16 +200,13 @@ const styles = StyleSheet.create({
 
   forgot: {
     alignSelf: 'flex-end',
-
     marginTop: -5,
     marginBottom: 25,
   },
 
   forgotText: {
     fontSize: 13,
-
     color: '#438A9C',
-
     fontWeight: '600',
   },
 
@@ -250,14 +214,10 @@ const styles = StyleSheet.create({
 
   loginButton: {
     height: 54,
-
     borderRadius: 15,
-
     backgroundColor: '#75B9C8',
-
     justifyContent: 'center',
     alignItems: 'center',
-
     shadowColor: '#5A9EAD',
     shadowOffset: {
       width: 0,
@@ -265,15 +225,12 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 6,
-
     elevation: 4,
   },
 
   loginText: {
     color: '#FFFFFF',
-
     fontSize: 16,
-
     fontWeight: '700',
   },
 });

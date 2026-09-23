@@ -11,10 +11,7 @@ import {
 
 import { API_URL } from '../utils/api';
 
-export default function OrderHistoryScreen({
-  onBack,
-  onViewOrderDetail,
-}) {
+export default function OrderHistoryScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -65,7 +62,7 @@ export default function OrderHistoryScreen({
   const getStatusInfo = (status) => {
     if (status === 'pending_payment') {
       return {
-        label: 'Chờ shop kiểm tra',
+        label: 'Chờ shop nhận tiền',
         bg: '#FFE8F0',
         color: '#D6336C',
         icon: '💰',
@@ -126,8 +123,8 @@ export default function OrderHistoryScreen({
 
   const filters = [
     { key: 'all', label: 'Tất cả' },
-    { key: 'pending_payment', label: 'Chờ shop kiểm tra' },
-    { key: 'pending', label: 'Chờ shop xác nhận' },
+    { key: 'pending_payment', label: 'Chờ nhận tiền' },
+    { key: 'pending', label: 'Chờ xác nhận' },
     { key: 'confirmed', label: 'Đã xác nhận' },
     { key: 'delivering', label: 'Đang giao' },
     { key: 'completed', label: 'Hoàn thành' },
@@ -140,9 +137,6 @@ export default function OrderHistoryScreen({
     return (
       <TouchableOpacity
         style={styles.orderCard}
-        onPress={() => {
-          if (onViewOrderDetail) onViewOrderDetail(item);
-        }}
         activeOpacity={0.8}
       >
         <View style={styles.orderHeader}>
@@ -192,12 +186,11 @@ export default function OrderHistoryScreen({
     );
   };
 
-  /* HEADER */
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={onBack}
+        onPress={() => navigation.navigate('Home')}
         activeOpacity={0.7}
       >
         <Text style={styles.backIcon}>‹</Text>
@@ -215,7 +208,6 @@ export default function OrderHistoryScreen({
     </View>
   );
 
-  /* LOADING */
   if (loading) {
     return (
       <View style={styles.container}>
@@ -230,7 +222,6 @@ export default function OrderHistoryScreen({
     );
   }
 
-  /* ERROR */
   if (error !== '') {
     return (
       <View style={styles.container}>
@@ -250,7 +241,6 @@ export default function OrderHistoryScreen({
     );
   }
 
-  /* EMPTY */
   if (orders.length === 0) {
     return (
       <View style={styles.container}>
@@ -267,7 +257,7 @@ export default function OrderHistoryScreen({
 
           <TouchableOpacity
             style={styles.backToShopButton}
-            onPress={onBack}
+            onPress={() => navigation.navigate('Home')}
             activeOpacity={0.8}
           >
             <Text style={styles.backToShopText}>Mua bánh ngay</Text>
@@ -277,12 +267,10 @@ export default function OrderHistoryScreen({
     );
   }
 
-  /* MAIN */
   return (
     <View style={styles.container}>
       {renderHeader()}
 
-      {/* FILTER TABS */}
       <View style={styles.filterWrapper}>
         <ScrollView
           horizontal
@@ -315,7 +303,6 @@ export default function OrderHistoryScreen({
         </ScrollView>
       </View>
 
-      {/* DANH SÁCH */}
       {filteredOrders.length === 0 && (
         <View style={styles.noResultContainer}>
           <Text style={styles.noResultIcon}>🔍</Text>
@@ -345,7 +332,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FDFF',
   },
 
-  /* HEADER */
   header: {
     height: 65,
     paddingTop: 44,
@@ -401,7 +387,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* FILTER */
   filterWrapper: {
     paddingVertical: 12,
     marginBottom: 8,
@@ -445,7 +430,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* LIST */
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
@@ -460,7 +444,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
@@ -534,7 +521,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* EMPTY */
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -567,7 +553,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#75B9C8',
     borderRadius: 14,
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -579,7 +568,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* NO RESULT */
   noResultContainer: {
     flex: 1,
     alignItems: 'center',

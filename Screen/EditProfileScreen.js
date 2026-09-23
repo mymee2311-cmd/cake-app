@@ -8,11 +8,11 @@ import {
   ScrollView,
 } from 'react-native';
 
-export default function EditProfileScreen({
-  userInfo,
-  onBack,
-  onSave,
-}) {
+import { useApp } from '../context/AppContext';
+
+export default function EditProfileScreen({ navigation }) {
+  const { userInfo, setUserInfo } = useApp();
+
   const [name, setName] = useState(userInfo?.name || '');
   const [phone, setPhone] = useState(userInfo?.phone || '');
   const [email, setEmail] = useState(userInfo?.mail || '');
@@ -26,45 +26,35 @@ export default function EditProfileScreen({
       address,
     };
 
-    onSave(updatedInfo);
+    setUserInfo(updatedInfo);
+    navigation.goBack();
   };
 
   return (
     <View style={styles.container}>
-
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <View style={styles.header}>
-
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Text style={styles.back}>
-            ‹
-          </Text>
+          <Text style={styles.back}>‹</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          Chỉnh sửa thông tin
-        </Text>
+        <Text style={styles.headerTitle}>Chỉnh sửa thông tin</Text>
 
         <View style={styles.headerRight} />
-
       </View>
 
-
-      {/* ================= FORM ================= */}
+      {/* FORM */}
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-
         {/* HỌ VÀ TÊN */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            Họ và tên
-          </Text>
+          <Text style={styles.label}>Họ và tên</Text>
 
           <TextInput
             style={styles.input}
@@ -75,12 +65,9 @@ export default function EditProfileScreen({
           />
         </View>
 
-
         {/* SỐ ĐIỆN THOẠI */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            Số điện thoại
-          </Text>
+          <Text style={styles.label}>Số điện thoại</Text>
 
           <TextInput
             style={styles.input}
@@ -92,12 +79,9 @@ export default function EditProfileScreen({
           />
         </View>
 
-
         {/* EMAIL */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            Email
-          </Text>
+          <Text style={styles.label}>Email</Text>
 
           <TextInput
             style={styles.input}
@@ -110,12 +94,9 @@ export default function EditProfileScreen({
           />
         </View>
 
-
         {/* ĐỊA CHỈ */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            Địa chỉ
-          </Text>
+          <Text style={styles.label}>Địa chỉ</Text>
 
           <TextInput
             style={[styles.input, styles.addressInput]}
@@ -127,18 +108,14 @@ export default function EditProfileScreen({
           />
         </View>
 
-
         {/* NÚT LƯU */}
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSave}
           activeOpacity={0.8}
         >
-          <Text style={styles.saveText}>
-            Lưu thay đổi
-          </Text>
+          <Text style={styles.saveText}>Lưu thay đổi</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </View>
   );
@@ -146,21 +123,15 @@ export default function EditProfileScreen({
 
 
 const styles = StyleSheet.create({
-
-  
-
   container: {
     flex: 1,
     backgroundColor: '#CDEFF7',
   },
 
-
-
   header: {
     height: 100,
     paddingTop: 40,
     paddingHorizontal: 20,
-
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -170,12 +141,9 @@ const styles = StyleSheet.create({
     width: 45,
     height: 42,
     borderRadius: 13,
-
     backgroundColor: '#FFFFFF',
-
     justifyContent: 'center',
     alignItems: 'center',
-
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
@@ -202,7 +170,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-
   inputGroup: {
     marginBottom: 20,
   },
@@ -216,16 +183,11 @@ const styles = StyleSheet.create({
 
   input: {
     backgroundColor: '#FFFFFF',
-
     height: 50,
-
     borderRadius: 12,
-
     paddingHorizontal: 15,
-
     fontSize: 16,
     color: '#333',
-
     borderWidth: 1,
     borderColor: '#D5E9ED',
   },
@@ -238,14 +200,10 @@ const styles = StyleSheet.create({
 
   saveButton: {
     height: 52,
-
     backgroundColor: '#78C9D8',
-
     borderRadius: 12,
-
     alignItems: 'center',
     justifyContent: 'center',
-
     marginTop: 10,
   },
 
@@ -254,5 +212,4 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
   },
-
 });

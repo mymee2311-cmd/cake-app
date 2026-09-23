@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+
 import { API_URL } from '../utils/api';
 
 const CATEGORIES = [
@@ -19,11 +20,7 @@ const CATEGORIES = [
   { id: 4, name: 'Bánh kem', emoji: '🍰' },
 ];
 
-export default function OwnerProductManagementScreen({
-  onBack,
-  onAddProduct,
-  onEditProduct,
-}) {
+export default function OwnerProductManagementScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -39,8 +36,12 @@ export default function OwnerProductManagementScreen({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchProducts();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const fetchProducts = async () => {
     try {
@@ -55,9 +56,7 @@ export default function OwnerProductManagementScreen({
       }
 
       let data = result.data;
-      if (!data) {
-        data = [];
-      }
+      if (!data) data = [];
       setProducts(data);
     } catch (err) {
       console.error('Lỗi lấy sản phẩm:', err);
@@ -79,7 +78,6 @@ export default function OwnerProductManagementScreen({
     return '🌰';
   };
 
-  // ===== FILTER =====
   let filteredProducts = products;
   const keyword = searchText.toLowerCase().trim();
 
@@ -99,7 +97,7 @@ export default function OwnerProductManagementScreen({
     });
   }
 
-  // ===== DELETE =====
+  /* ================= DELETE ================= */
   const handleDelete = (product) => {
     Alert.alert(
       'Xóa sản phẩm',
@@ -134,7 +132,7 @@ export default function OwnerProductManagementScreen({
     );
   };
 
-  // ===== EDIT  =====
+  /* ================= EDIT ================= */
   const handleEdit = (product) => {
     setEditingProduct(product);
     setEditName(product.name || '');
@@ -143,25 +141,30 @@ export default function OwnerProductManagementScreen({
     setEditStock(String(product.stock || ''));
     setEditImage(product.image || '');
     setEditCategoryId(product.category_id || 1);
-
-    if (onEditProduct) onEditProduct(product);
   };
 
   const closeEditModal = () => {
     setEditingProduct(null);
   };
 
-  // ===== SAVE EDIT =====
   const handleSaveEdit = async () => {
     if (!editName.trim()) {
       Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên sản phẩm');
       return;
     }
-    if (!editPrice.trim() || isNaN(Number(editPrice)) || Number(editPrice) <= 0) {
+    if (
+      !editPrice.trim() ||
+      isNaN(Number(editPrice)) ||
+      Number(editPrice) <= 0
+    ) {
       Alert.alert('Giá không hợp lệ', 'Vui lòng nhập giá sản phẩm');
       return;
     }
-    if (!editStock.trim() || isNaN(Number(editStock)) || Number(editStock) < 0) {
+    if (
+      !editStock.trim() ||
+      isNaN(Number(editStock)) ||
+      Number(editStock) < 0
+    ) {
       Alert.alert('Số lượng không hợp lệ', 'Vui lòng nhập số lượng tồn kho');
       return;
     }
@@ -208,7 +211,7 @@ export default function OwnerProductManagementScreen({
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
           <Text style={styles.backIcon}>‹</Text>
@@ -228,7 +231,7 @@ export default function OwnerProductManagementScreen({
 
         <TouchableOpacity
           style={styles.addButton}
-          onPress={onAddProduct}
+          onPress={() => navigation.navigate('AddProduct')}
           activeOpacity={0.8}
         >
           <Text style={styles.addButtonIcon}>＋</Text>
@@ -339,7 +342,7 @@ export default function OwnerProductManagementScreen({
         </ScrollView>
       )}
 
-      {/* ================= MODAL SỬA SẢN PHẨM ================= */}
+      {/* MODAL SỬA SẢN PHẨM */}
       <Modal
         visible={editingProduct !== null}
         animationType="slide"
@@ -440,7 +443,9 @@ export default function OwnerProductManagementScreen({
                         onPress={() => setEditCategoryId(cat.id)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                        <Text style={styles.categoryEmoji}>
+                          {cat.emoji}
+                        </Text>
                         <Text
                           style={[
                             styles.categoryText,
@@ -488,8 +493,12 @@ export default function OwnerProductManagementScreen({
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FDFF' },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FDFF',
+  },
 
   /* HEADER */
   header: {
@@ -504,6 +513,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEF7F9',
   },
+
   backButton: {
     width: 42,
     height: 42,
@@ -514,17 +524,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
   backIcon: {
-     fontSize: 30,
-     color: '#438A9C',
-     marginTop: -3 },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: '800', 
-    color: '#356F7C'
- },
+    fontSize: 30,
+    color: '#438A9C',
+    marginTop: -3,
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#356F7C',
+  },
+
   headerRight: {
-     width: 42 
+    width: 42,
   },
 
   /* STATS */
@@ -536,6 +550,7 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
   },
+
   statBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
@@ -545,16 +560,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
-  statNumber: { 
+
+  statNumber: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#438A9C' 
+    color: '#438A9C',
   },
-  statLabel: { 
-    fontSize: 11, 
-    color: '#7B9EA5', 
-    marginTop: 2 
+
+  statLabel: {
+    fontSize: 11,
+    color: '#7B9EA5',
+    marginTop: 2,
   },
+
   addButton: {
     flex: 1,
     flexDirection: 'row',
@@ -565,22 +583,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 3,
   },
+
   addButtonIcon: {
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '800',
     marginTop: -2,
   },
-  addButtonText: { 
-    color: '#FFFFFF', 
-    fontSize: 14, 
-    fontWeight: '700'
- },
+
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 
   /* SEARCH */
   searchBox: {
@@ -595,11 +618,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D4EDF2',
   },
-  searchIcon: { fontSize: 16, marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 14, color: '#3F6670' },
+
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#3F6670',
+  },
 
   /* LIST */
-  listContent: { paddingHorizontal: 20, paddingBottom: 30 },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+
   productCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -609,11 +645,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DDEFF3',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 5,
     elevation: 2,
   },
+
   productImage: {
     width: 60,
     height: 60,
@@ -623,49 +663,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  productEmoji: { 
-    fontSize: 30 
+
+  productEmoji: {
+    fontSize: 30,
   },
-  productInfo: { 
-    flex: 1, 
-    justifyContent: 'space-between' 
+
+  productInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
-  productName: { 
-    fontSize: 14, 
-    fontWeight: '800', 
-    color: '#438A9C'
-   },
-  productDesc: { 
-    fontSize: 11, 
-    color: '#89A5AA', 
-    marginTop: 2 
+
+  productName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#438A9C',
   },
+
+  productDesc: {
+    fontSize: 11,
+    color: '#89A5AA',
+    marginTop: 2,
+  },
+
   productMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
     gap: 8,
   },
-  productPrice: { 
-    fontSize: 13, 
+
+  productPrice: {
+    fontSize: 13,
     fontWeight: '800',
-    color: '#438A9C'
- },
+    color: '#438A9C',
+  },
+
   stockBadge: {
     backgroundColor: '#E8F7FA',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
-  stockText: { 
-    fontSize: 10, 
+
+  stockText: {
+    fontSize: 10,
     fontWeight: '700',
-     color: '#5C929E' 
+    color: '#5C929E',
   },
+
   actions: {
-     justifyContent: 'space-between',
-     marginLeft: 8
- },
+    justifyContent: 'space-between',
+    marginLeft: 8,
+  },
+
   editButton: {
     width: 32,
     height: 32,
@@ -674,7 +724,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  editIcon: { fontSize: 14 },
+
+  editIcon: {
+    fontSize: 14,
+  },
+
   deleteButton: {
     width: 32,
     height: 32,
@@ -683,7 +737,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  deleteIcon: { fontSize: 14 },
+
+  deleteIcon: {
+    fontSize: 14,
+  },
 
   /* STATES */
   centerBox: {
@@ -692,47 +749,55 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 40,
   },
+
   loadingText: {
-     marginTop: 10, 
-     fontSize: 13, 
-     color: '#7D9FA7'
+    marginTop: 10,
+    fontSize: 13,
+    color: '#7D9FA7',
   },
-  errorIcon: { 
+
+  errorIcon: {
     fontSize: 40,
-    marginBottom: 8 ,
- },
+    marginBottom: 8,
+  },
+
   errorText: {
     fontSize: 13,
     color: '#7D9FA7',
     textAlign: 'center',
     marginBottom: 16,
   },
+
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 12,
     backgroundColor: '#75B9C8',
   },
-  retryText: { 
+
+  retryText: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  emptyIcon: {
-     fontSize: 60, 
-     marginBottom: 12 
-  },
-  emptyText: {
-     fontSize: 14, 
-     color: '#89A5AA', 
-     textAlign: 'center'
- },
 
-  /* ================= MODAL ================= */
+  emptyIcon: {
+    fontSize: 60,
+    marginBottom: 12,
+  },
+
+  emptyText: {
+    fontSize: 14,
+    color: '#89A5AA',
+    textAlign: 'center',
+  },
+
+  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
+
   modalContent: {
     backgroundColor: '#F8FDFF',
     borderTopLeftRadius: 24,
@@ -740,6 +805,7 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     paddingTop: 8,
   },
+
   modalHeader: {
     height: 60,
     paddingHorizontal: 20,
@@ -749,6 +815,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEF7F9',
   },
+
   modalCloseButton: {
     width: 42,
     height: 42,
@@ -759,26 +826,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
   modalCloseIcon: {
-     fontSize: 20, 
-     color: '#438A9C', 
-     fontWeight: '700' 
+    fontSize: 20,
+    color: '#438A9C',
+    fontWeight: '700',
   },
+
   modalTitle: {
-     fontSize: 18, 
-     fontWeight: '800', 
-     color: '#356F7C'
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#356F7C',
   },
+
   modalBody: {
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 30,
   },
+
   modalActions: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 10,
   },
+
   cancelButton: {
     flex: 1,
     height: 52,
@@ -789,11 +861,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cancelText: { 
-    color: '#438A9C', 
-    fontSize: 15, 
-    fontWeight: '700'
+
+  cancelText: {
+    color: '#438A9C',
+    fontSize: 15,
+    fontWeight: '700',
   },
+
   saveButton: {
     flex: 1.5,
     height: 52,
@@ -802,29 +876,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
   },
-  saveButtonDisabled: { 
-    opacity: 0.6 
-  },
-  saveText: {
-     color: '#FFFFFF', 
-     fontSize: 15, 
-     fontWeight: '700' 
+
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
 
-  inputGroup: { 
-    marginBottom: 16 
+  saveText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
+
+  inputGroup: {
+    marginBottom: 16,
+  },
+
   label: {
     fontSize: 14,
     fontWeight: '700',
     color: '#356F7C',
     marginBottom: 8,
   },
+
   input: {
     backgroundColor: '#FFFFFF',
     minHeight: 50,
@@ -835,16 +916,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D5E9ED',
   },
+
   textarea: {
-    minHeight: 80, 
+    minHeight: 80,
     paddingTop: 14,
-    textAlignVertical: 'top'
+    textAlignVertical: 'top',
   },
+
   categoryRow: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8
+    gap: 8,
   },
+
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -855,20 +939,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
-  categoryChipActive: { 
+
+  categoryChipActive: {
     backgroundColor: '#75B9C8',
-    borderColor: '#75B9C8' 
+    borderColor: '#75B9C8',
   },
-  categoryEmoji: { 
-    fontSize: 16, 
-    marginRight: 6 
+
+  categoryEmoji: {
+    fontSize: 16,
+    marginRight: 6,
   },
-  categoryText: { 
-    fontSize: 13, 
-    color: '#438A9C', 
-    fontWeight: '600'
+
+  categoryText: {
+    fontSize: 13,
+    color: '#438A9C',
+    fontWeight: '600',
   },
-  categoryTextActive: { 
-    color: '#FFFFFF' 
+
+  categoryTextActive: {
+    color: '#FFFFFF',
   },
 });

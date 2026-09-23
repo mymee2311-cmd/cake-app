@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Text,
   View,
+  Text,
   StyleSheet,
   TouchableOpacity,
   TextInput,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { API_URL } from '../utils/api';
+import { useApp } from '../context/AppContext';
 
 const CATEGORIES = [
   { id: 1, name: 'Bánh hạt', emoji: '🌰' },
@@ -19,7 +20,9 @@ const CATEGORIES = [
   { id: 4, name: 'Bánh kem', emoji: '🍰' },
 ];
 
-export default function AddProductScreen({ onBack, onSuccess }) {
+export default function AddProductScreen({ navigation }) {
+  const { setProductRefreshKey } = useApp();
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -68,8 +71,8 @@ export default function AddProductScreen({ onBack, onSuccess }) {
         {
           text: 'OK',
           onPress: () => {
-            if (onSuccess) onSuccess();
-            if (onBack) onBack();
+            setProductRefreshKey((k) => k + 1);
+            navigation.goBack();
           },
         },
       ]);
@@ -87,7 +90,7 @@ export default function AddProductScreen({ onBack, onSuccess }) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => navigation.goBack()}
           activeOpacity={0.8}
         >
           <Text style={styles.backIcon}>‹</Text>
@@ -218,7 +221,10 @@ export default function AddProductScreen({ onBack, onSuccess }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#EAF8FB' },
+  container: {
+    flex: 1,
+    backgroundColor: '#EAF8FB',
+  },
 
   header: {
     height: 65,
@@ -228,6 +234,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+
   backButton: {
     width: 42,
     height: 42,
@@ -238,17 +245,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
   backIcon: {
     fontSize: 30,
     color: '#438A9C',
     marginTop: -3,
   },
+
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
     color: '#356F7C',
   },
-  headerRight: { width: 42 },
+
+  headerRight: {
+    width: 42,
+  },
 
   content: {
     paddingHorizontal: 20,
@@ -256,13 +268,17 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  inputGroup: { marginBottom: 18 },
+  inputGroup: {
+    marginBottom: 18,
+  },
+
   label: {
     fontSize: 14,
     fontWeight: '700',
     color: '#356F7C',
     marginBottom: 8,
   },
+
   input: {
     backgroundColor: '#FFFFFF',
     minHeight: 50,
@@ -273,13 +289,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D5E9ED',
   },
+
   textarea: {
     minHeight: 90,
     paddingTop: 14,
     textAlignVertical: 'top',
   },
 
-  categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,13 +312,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
   categoryChipActive: {
     backgroundColor: '#75B9C8',
     borderColor: '#75B9C8',
   },
-  categoryEmoji: { fontSize: 16, marginRight: 6 },
-  categoryText: { fontSize: 13, color: '#438A9C', fontWeight: '600' },
-  categoryTextActive: { color: '#FFFFFF' },
+
+  categoryEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+
+  categoryText: {
+    fontSize: 13,
+    color: '#438A9C',
+    fontWeight: '600',
+  },
+
+  categoryTextActive: {
+    color: '#FFFFFF',
+  },
 
   saveButton: {
     height: 54,
@@ -306,11 +341,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
   },
-  saveButtonDisabled: { opacity: 0.6 },
-  saveText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  saveText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

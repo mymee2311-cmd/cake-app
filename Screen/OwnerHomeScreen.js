@@ -6,18 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import { API_URL } from '../utils/api';
 
-export default function OwnerHomeScreen({
-  onProducts,
-  onOrders,
-  onCategories,
-  onPromotions,
-  onProfile,
-  onLogout,
-}) {
+export default function OwnerHomeScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +40,7 @@ export default function OwnerHomeScreen({
       setLoading(false);
     }
   };
+
   const revenue = orders
     .filter((o) => o.status === 'completed')
     .reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -76,8 +71,8 @@ export default function OwnerHomeScreen({
   };
 
   const getStatusInfo = (status) => {
-     if (status === 'pending_payment')
-    return { label: '💰 Chờ nhận tiền', bg: '#FFE8F0', color: '#D6336C' };
+    if (status === 'pending_payment')
+      return { label: '💰 Chờ nhận tiền', bg: '#FFE8F0', color: '#D6336C' };
     if (status === 'pending')
       return { label: 'Chờ xác nhận', bg: '#FFF3D8', color: '#C28A32' };
     if (status === 'confirmed')
@@ -102,7 +97,7 @@ export default function OwnerHomeScreen({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <View style={styles.header}>
           <View>
             <Text style={styles.welcome}>Xin chào 👋</Text>
@@ -111,20 +106,20 @@ export default function OwnerHomeScreen({
 
           <TouchableOpacity
             style={styles.avatar}
-            onPress={onProfile}
+            onPress={() => navigation.navigate('Profile')}
             activeOpacity={0.8}
           >
             <Text style={styles.avatarText}>👩‍🍳</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ================= TITLE ================= */}
+        {/* TITLE */}
         <View style={styles.titleSection}>
           <Text style={styles.title}>Tổng quan cửa hàng</Text>
           <Text style={styles.subtitle}>Quản lý Mee Bakery của bạn</Text>
         </View>
 
-        {/* ================= STATS THẬT ================= */}
+        {/* STATS */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <View style={styles.statIcon}>
@@ -163,13 +158,13 @@ export default function OwnerHomeScreen({
           </View>
         </View>
 
-        {/* ================= QUẢN LÝ ================= */}
+        {/* QUẢN LÝ */}
         <Text style={styles.sectionTitle}>Quản lý cửa hàng</Text>
 
         <View style={styles.managementGrid}>
           <TouchableOpacity
             style={styles.managementCard}
-            onPress={onProducts}
+            onPress={() => navigation.navigate('OwnerProducts')}
             activeOpacity={0.8}
           >
             <View style={styles.managementIcon}>
@@ -181,7 +176,7 @@ export default function OwnerHomeScreen({
 
           <TouchableOpacity
             style={styles.managementCard}
-            onPress={onOrders}
+            onPress={() => navigation.navigate('OwnerOrders')}
             activeOpacity={0.8}
           >
             <View style={styles.managementIcon}>
@@ -193,7 +188,9 @@ export default function OwnerHomeScreen({
 
           <TouchableOpacity
             style={styles.managementCard}
-            onPress={onCategories}
+            onPress={() =>
+              Alert.alert('Sắp ra mắt', 'Màn hình Quản lý danh mục')
+            }
             activeOpacity={0.8}
           >
             <View style={styles.managementIcon}>
@@ -205,7 +202,9 @@ export default function OwnerHomeScreen({
 
           <TouchableOpacity
             style={styles.managementCard}
-            onPress={onPromotions}
+            onPress={() =>
+              Alert.alert('Sắp ra mắt', 'Màn hình Quản lý khuyến mãi')
+            }
             activeOpacity={0.8}
           >
             <View style={styles.managementIcon}>
@@ -216,10 +215,10 @@ export default function OwnerHomeScreen({
           </TouchableOpacity>
         </View>
 
-        {/* ================= ĐƠN HÀNG MỚI ================= */}
+        {/* ĐƠN HÀNG MỚI */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Đơn hàng mới</Text>
-          <TouchableOpacity onPress={onOrders}>
+          <TouchableOpacity onPress={() => navigation.navigate('OwnerOrders')}>
             <Text style={styles.viewAll}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
@@ -240,7 +239,7 @@ export default function OwnerHomeScreen({
           </View>
         )}
 
-        {/* DANH SÁCH ĐƠN THẬT */}
+        {/* DANH SÁCH ĐƠN */}
         {!loading &&
           recentOrders.map((order, index) => {
             const statusInfo = getStatusInfo(order.status);
@@ -248,7 +247,7 @@ export default function OwnerHomeScreen({
               <TouchableOpacity
                 key={order.id}
                 style={styles.orderCard}
-                onPress={onOrders}
+                onPress={() => navigation.navigate('OwnerOrders')}
                 activeOpacity={0.8}
               >
                 <View style={styles.orderLeft}>
@@ -304,7 +303,6 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
 
-  /* ================= HEADER ================= */
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -312,16 +310,19 @@ const styles = StyleSheet.create({
     paddingTop: 35,
     paddingBottom: 30,
   },
+
   welcome: {
     fontSize: 14,
     color: '#6B969E',
     marginBottom: 2,
   },
+
   ownerName: {
     fontSize: 24,
     fontWeight: '800',
     color: '#438A9C',
   },
+
   avatar: {
     width: 48,
     height: 48,
@@ -332,31 +333,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D1EDF2',
   },
+
   avatarText: {
     fontSize: 25,
   },
 
-  /* ================= TITLE ================= */
   titleSection: {
     marginBottom: 18,
   },
+
   title: {
     fontSize: 21,
     fontWeight: '800',
     color: '#356F7C',
   },
+
   subtitle: {
     marginTop: 5,
     fontSize: 13,
     color: '#7B9EA5',
   },
 
-  /* ================= STATS ================= */
   statsRow: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
   },
+
   statCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -365,11 +368,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
+
   statIcon: {
     width: 38,
     height: 38,
@@ -379,18 +386,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
+
   statNumber: {
     fontSize: 17,
     fontWeight: '800',
     color: '#438A9C',
   },
+
   statLabel: {
     marginTop: 4,
     fontSize: 12,
     color: '#7C9BA1',
   },
 
-  /* ================= MANAGEMENT ================= */
   sectionTitle: {
     fontSize: 19,
     fontWeight: '800',
@@ -398,11 +406,13 @@ const styles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 13,
   },
+
   managementGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
+
   managementCard: {
     width: '48%',
     backgroundColor: '#FFFFFF',
@@ -411,11 +421,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
+
   managementIcon: {
     width: 48,
     height: 48,
@@ -425,31 +439,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+
   iconText: {
     fontSize: 24,
   },
+
   managementTitle: {
     fontSize: 15,
     fontWeight: '800',
     color: '#438A9C',
   },
+
   managementDescription: {
     marginTop: 4,
     fontSize: 12,
     color: '#89A5AA',
   },
 
-  /* ================= ORDERS ================= */
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
   viewAll: {
     color: '#438A9C',
     fontSize: 13,
     fontWeight: '700',
   },
+
   orderCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -461,16 +479,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
+
   orderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
+
   orderIcon: {
     width: 48,
     height: 48,
@@ -480,53 +503,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
+
   orderName: {
     fontSize: 14,
     fontWeight: '800',
     color: '#416F78',
   },
+
   orderCustomer: {
     fontSize: 12,
     color: '#89A5AA',
     marginTop: 3,
   },
+
   orderPrice: {
     fontSize: 13,
     fontWeight: '700',
     color: '#438A9C',
     marginTop: 4,
   },
+
   orderDate: {
     fontSize: 10,
     color: '#B0CFD6',
     marginTop: 3,
   },
 
-  /* ================= STATUS ================= */
   statusBadge: {
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 10,
   },
+
   statusText: {
     fontSize: 10,
     fontWeight: '700',
   },
 
-  /* ================= EMPTY/LOADING ================= */
   centerBox: {
     alignItems: 'center',
     paddingVertical: 20,
   },
+
   loadingText: {
     marginTop: 8,
     fontSize: 12,
     color: '#7D9FA7',
   },
+
   emptyIcon: {
     fontSize: 40,
     marginBottom: 8,
   },
+
   emptyText: {
     fontSize: 13,
     color: '#89A5AA',

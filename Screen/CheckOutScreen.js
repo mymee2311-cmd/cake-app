@@ -13,6 +13,7 @@ import {
 
 import { API_URL } from '../utils/api';
 import AddressPicker from '../components/AddressPicker';
+import { useApp } from '../context/AppContext';
 
 /* ================= THÔNG TIN NGÂN HÀNG ================= */
 const OWNER_BANK = {
@@ -27,11 +28,9 @@ const OWNER_MOMO = {
   name: 'NGUYEN DUONG HA MY',
 };
 
-export default function CheckoutScreen({
-  cartItems = [],
-  onBack,
-  onConfirm,
-}) {
+export default function CheckoutScreen({ navigation }) {
+  const { cart, addOrder, clearCart } = useApp();
+
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [address, setAddress] = useState('');
   const [name, setName] = useState('');
@@ -40,7 +39,7 @@ export default function CheckoutScreen({
 
   const [showAddressPicker, setShowAddressPicker] = useState(false);
 
-  const total = cartItems.reduce(
+  const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
@@ -61,7 +60,7 @@ export default function CheckoutScreen({
 
   /* ================= XÁC NHẬN ĐƠN ================= */
   const handleConfirm = async () => {
-    if (cartItems.length === 0) {
+    if (cart.length === 0) {
       Alert.alert('Giỏ hàng trống!', 'Vui lòng chọn bánh trước');
       return;
     }
@@ -81,10 +80,7 @@ export default function CheckoutScreen({
       return;
     }
     if (!address.trim()) {
-      Alert.alert(
-        'Thiếu địa chỉ',
-        'Vui lòng chọn địa chỉ giao hàng'
-      );
+      Alert.alert('Thiếu địa chỉ', 'Vui lòng chọn địa chỉ giao hàng');
       return;
     }
 
@@ -93,7 +89,7 @@ export default function CheckoutScreen({
     try {
       const orderCode = 'MB' + Math.floor(100000 + Math.random() * 900000);
 
-      const items = cartItems.map((item) => ({
+      const items = cart.map((item) => ({
         id: item.id,
         name: item.name,
         price: Number(item.price),
@@ -120,18 +116,22 @@ export default function CheckoutScreen({
         throw new Error(result.error || 'Không thể đặt hàng');
       }
 
-      if (onConfirm) {
-        onConfirm({
-          orderCode: orderCode,
-          orderId: result.data.order_id,
-          paymentMethod,
-          address: address.trim(),
-          name,
-          phone,
-          total,
-          cartItems,
-        });
-      }
+      const newOrder = {
+        orderCode: orderCode,
+        orderId: result.data.order_id,
+        createdAt: new Date().toISOString(),
+        paymentMethod,
+        address: address.trim(),
+        name: name.trim(),
+        phone: phone.trim(),
+        total,
+        cartItems: cart,
+        status: paymentMethod === 'cash' ? 'pending' : 'pending_payment',
+      };
+
+      addOrder(newOrder);
+      clearCart();
+      navigation.navigate('OrderSuccess');
     } catch (err) {
       console.error('Lỗi đặt hàng:', err);
       Alert.alert('Lỗi', err.message || 'Không thể kết nối máy chủ');
@@ -141,15 +141,11 @@ export default function CheckoutScreen({
   };
 
   const renderCartItems = () => {
-    if (cartItems.length === 0) {
-      return (
-        <Text style={styles.emptyText}>
-          Giỏ hàng đang trống
-        </Text>
-      );
+    if (cart.length === 0) {
+      return <Text style={styles.emptyText}>Giỏ hàng đang trống</Text>;
     }
 
-    return cartItems.map((item, i) => (
+    return cart.map((item, i) => (
       <View key={i} style={styles.itemRow}>
         <Text style={styles.itemName}>
           {item.name} x {item.quantity}
@@ -172,7 +168,7 @@ export default function CheckoutScreen({
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={onBack}
+            onPress={() => navigation.goBack()}
           >
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
@@ -183,17 +179,11 @@ export default function CheckoutScreen({
         </View>
 
         {/* ĐƠN HÀNG */}
-        <Text style={styles.sectionTitle}>
-          Đơn hàng của bạn
-        </Text>
-        <View style={styles.card}>
-          {renderCartItems()}
-        </View>
+        <Text style={styles.sectionTitle}>Đơn hàng của bạn</Text>
+        <View style={styles.card}>{renderCartItems()}</View>
 
         {/* THÔNG TIN NGƯỜI NHẬN */}
-        <Text style={styles.sectionTitle}>
-          Thông tin người nhận
-        </Text>
+        <Text style={styles.sectionTitle}>Thông tin người nhận</Text>
 
         <TextInput
           style={styles.input}
@@ -225,15 +215,11 @@ export default function CheckoutScreen({
         )}
 
         {phone.trim().length > 0 && isValidPhone(phone) && (
-          <Text style={styles.successHint}>
-            ✓ Số điện thoại hợp lệ
-          </Text>
+          <Text style={styles.successHint}>✓ Số điện thoại hợp lệ</Text>
         )}
 
         {/* ĐỊA CHỈ */}
-        <Text style={styles.sectionTitle}>
-          Địa chỉ giao hàng
-        </Text>
+        <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
 
         <TouchableOpacity
           style={[
@@ -256,7 +242,6 @@ export default function CheckoutScreen({
           <Text style={styles.addressArrow}>›</Text>
         </TouchableOpacity>
 
-        {/* MODAL CHỌN ĐỊA CHỈ */}
         <AddressPicker
           visible={showAddressPicker}
           onClose={() => setShowAddressPicker(false)}
@@ -267,17 +252,13 @@ export default function CheckoutScreen({
         />
 
         {/* PHƯƠNG THỨC THANH TOÁN */}
-        <Text style={styles.sectionTitle}>
-          Phương thức thanh toán
-        </Text>
+        <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.methodRow}
             onPress={() => setPaymentMethod('cash')}
           >
-            <Text style={styles.methodText}>
-              💵  Tiền mặt
-            </Text>
+            <Text style={styles.methodText}>💵  Tiền mặt</Text>
             <Text style={styles.radio}>
               {paymentMethod === 'cash' ? '●' : '○'}
             </Text>
@@ -289,9 +270,7 @@ export default function CheckoutScreen({
             style={styles.methodRow}
             onPress={() => setPaymentMethod('bank')}
           >
-            <Text style={styles.methodText}>
-              🏦  Chuyển khoản
-            </Text>
+            <Text style={styles.methodText}>🏦  Chuyển khoản</Text>
             <Text style={styles.radio}>
               {paymentMethod === 'bank' ? '●' : '○'}
             </Text>
@@ -303,9 +282,7 @@ export default function CheckoutScreen({
             style={styles.methodRow}
             onPress={() => setPaymentMethod('momo')}
           >
-            <Text style={styles.methodText}>
-              📱  Momo
-            </Text>
+            <Text style={styles.methodText}>📱  Momo</Text>
             <Text style={styles.radio}>
               {paymentMethod === 'momo' ? '●' : '○'}
             </Text>
@@ -315,9 +292,7 @@ export default function CheckoutScreen({
         {/* QR CHUYỂN KHOẢN */}
         {paymentMethod === 'bank' && (
           <View style={styles.qrBox}>
-            <Text style={styles.qrTitle}>
-              🏦 Quét mã để chuyển khoản
-            </Text>
+            <Text style={styles.qrTitle}>🏦 Quét mã để chuyển khoản</Text>
 
             <Image
               source={{ uri: getBankQrUrl() }}
@@ -328,23 +303,17 @@ export default function CheckoutScreen({
             <View style={styles.bankInfo}>
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Ngân hàng:</Text>
-                <Text style={styles.bankValue}>
-                  {OWNER_BANK.bankName}
-                </Text>
+                <Text style={styles.bankValue}>{OWNER_BANK.bankName}</Text>
               </View>
 
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Số TK:</Text>
-                <Text style={styles.bankValue}>
-                  {OWNER_BANK.accountNumber}
-                </Text>
+                <Text style={styles.bankValue}>{OWNER_BANK.accountNumber}</Text>
               </View>
 
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Chủ TK:</Text>
-                <Text style={styles.bankValue}>
-                  {OWNER_BANK.accountName}
-                </Text>
+                <Text style={styles.bankValue}>{OWNER_BANK.accountName}</Text>
               </View>
 
               <View style={styles.bankRow}>
@@ -364,22 +333,14 @@ export default function CheckoutScreen({
         {/* MOMO */}
         {paymentMethod === 'momo' && (
           <View style={styles.qrBox}>
-            <Text style={styles.qrTitle}>
-              📱 Thanh toán qua Momo
-            </Text>
+            <Text style={styles.qrTitle}>📱 Thanh toán qua Momo</Text>
 
             <View style={styles.momoInfo}>
-              <Text style={styles.momoText}>
-                Mở app Momo
-              </Text>
-              <Text style={styles.momoText}>
-                → Chọn "Chuyển tiền"
-              </Text>
+              <Text style={styles.momoText}>Mở app Momo</Text>
+              <Text style={styles.momoText}>→ Chọn "Chuyển tiền"</Text>
               <Text style={styles.momoText}>
                 → Nhập SĐT:{' '}
-                <Text style={styles.momoPhone}>
-                  {OWNER_MOMO.phone}
-                </Text>
+                <Text style={styles.momoPhone}>{OWNER_MOMO.phone}</Text>
               </Text>
               <Text style={styles.momoText}>
                 → Số tiền:{' '}
@@ -400,9 +361,7 @@ export default function CheckoutScreen({
 
         {/* TỔNG TIỀN */}
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>
-            Tổng tiền
-          </Text>
+          <Text style={styles.totalLabel}>Tổng tiền</Text>
           <Text style={styles.totalValue}>
             {total.toLocaleString('vi-VN')}đ
           </Text>
@@ -413,12 +372,8 @@ export default function CheckoutScreen({
           <View style={styles.warningBox}>
             <Text style={styles.warningIcon}>⚠️</Text>
             <Text style={styles.warningText}>
-              Sau khi nhấn "Tôi đã chuyển khoản", đơn sẽ ở
-              trạng thái{' '}
-              <Text style={styles.warningBold}>
-                chờ shop nhận tiền
-              </Text>
-              .{'\n'}
+              Sau khi nhấn "Tôi đã chuyển khoản", đơn sẽ ở trạng thái{' '}
+              <Text style={styles.warningBold}>chờ shop nhận tiền</Text>.{'\n'}
               Shop sẽ kiểm tra và xác nhận trong vài phút.
             </Text>
           </View>
@@ -426,10 +381,7 @@ export default function CheckoutScreen({
 
         {/* NÚT XÁC NHẬN */}
         <TouchableOpacity
-          style={[
-            styles.confirmButton,
-            submitting && { opacity: 0.6 },
-          ]}
+          style={[styles.confirmButton, submitting && { opacity: 0.6 }]}
           onPress={handleConfirm}
           disabled={submitting}
           activeOpacity={0.8}
@@ -573,7 +525,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* ================= ADDRESS PICKER  ================= */
   addressButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -616,7 +567,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* PAYMENT */
   methodRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -639,7 +589,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E7F2F4',
   },
 
-  /* QR */
   qrBox: {
     marginTop: 14,
     padding: 16,
@@ -649,7 +598,10 @@ const styles = StyleSheet.create({
     borderColor: '#75B9C8',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3,
@@ -717,7 +669,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
 
-  /* MOMO */
   momoInfo: {
     width: '100%',
     padding: 16,
@@ -744,7 +695,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  /* WARNING */
   warningBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -772,7 +722,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* TOTAL */
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -801,7 +750,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,

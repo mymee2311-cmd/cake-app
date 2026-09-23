@@ -9,17 +9,11 @@ import {
   Easing,
 } from 'react-native';
 
-import{
-  getProductEmoji,
-  formatPrice,
-  UI_EMOJI,
-} from '../utils/emoji';
+import { useApp } from '../context/AppContext';
 
-export default function OrderSuccessScreen({
-  orderInfo,
-  onGoHome,
-  onViewOrders,
-}) {
+export default function OrderSuccessScreen({ navigation }) {
+  const { lastOrder } = useApp();
+
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -59,28 +53,18 @@ export default function OrderSuccessScreen({
     return method;
   };
 
-  let orderCode = 'MB' + Math.floor(100000 + Math.random() * 900000);
+  let orderCode = 'MB000000';
   let cartItems = [];
   let address = '';
   let paymentMethod = '';
   let total = 0;
 
-  if (orderInfo) {
-    if (orderInfo.orderCode) {
-      orderCode = orderInfo.orderCode;
-    }
-    if (orderInfo.cartItems) {
-      cartItems = orderInfo.cartItems;
-    }
-    if (orderInfo.address) {
-      address = orderInfo.address;
-    }
-    if (orderInfo.paymentMethod) {
-      paymentMethod = orderInfo.paymentMethod;
-    }
-    if (orderInfo.total) {
-      total = orderInfo.total;
-    }
+  if (lastOrder) {
+    orderCode = lastOrder.orderCode || orderCode;
+    cartItems = lastOrder.cartItems || [];
+    address = lastOrder.address || '';
+    paymentMethod = lastOrder.paymentMethod || '';
+    total = lastOrder.total || 0;
   }
 
   return (
@@ -185,7 +169,7 @@ export default function OrderSuccessScreen({
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={onGoHome}
+          onPress={() => navigation.navigate('Home')}
           activeOpacity={0.8}
         >
           <Text style={styles.primaryText}>Về trang chủ</Text>
@@ -193,7 +177,7 @@ export default function OrderSuccessScreen({
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={onViewOrders}
+          onPress={() => navigation.navigate('OrderHistory')}
           activeOpacity={0.8}
         >
           <Text style={styles.secondaryText}>Xem đơn hàng</Text>
@@ -205,7 +189,6 @@ export default function OrderSuccessScreen({
 
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#F8FDFF',
@@ -226,7 +209,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 6,
@@ -268,7 +254,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
@@ -417,7 +406,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -445,5 +437,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-
 });

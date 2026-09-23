@@ -8,25 +8,24 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+
 import { API_URL } from '../utils/api';
 import {
   getProductEmoji,
   formatPrice,
   UI_EMOJI,
 } from '../utils/emoji';
+import { useApp } from '../context/AppContext';
 
+export default function HomeScreen({ navigation }) {
+  const {
+    cart,
+    favorites,
+    addToCart,
+    toggleFavorite,
+    openProduct,
+  } = useApp();
 
-export default function HomeScreen({
-  onOwnerLogin,
-  cart = [],
-  onAddToCart,
-  onGoToCheckout,
-  onGoToOrders,
-  onGoToFavorite,
-  onGoToProduct,
-  favorites = [],              
-  onToggleFavorite,            
-}) {
   const [products, setProducts] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -95,7 +94,7 @@ export default function HomeScreen({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <View style={styles.header}>
           <View>
             <Text style={styles.smallTitle}>Chào mừng đến với</Text>
@@ -104,14 +103,14 @@ export default function HomeScreen({
 
           <TouchableOpacity
             style={styles.ownerButton}
-            onPress={onOwnerLogin}
+            onPress={() => navigation.navigate('Login')}
             activeOpacity={0.7}
           >
             <Text style={styles.ownerIcon}>🔐</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ================= SEARCH ================= */}
+        {/* SEARCH */}
         <View style={styles.searchBox}>
           <Text style={styles.searchIcon}>{UI_EMOJI.search}</Text>
           <TextInput
@@ -123,7 +122,7 @@ export default function HomeScreen({
           />
         </View>
 
-        {/* ================= BANNER + OFFER ================= */}
+        {/* BANNER + OFFER */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -151,7 +150,7 @@ export default function HomeScreen({
           </View>
         </ScrollView>
 
-        {/* ================= CATEGORY ================= */}
+        {/* CATEGORY */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Danh mục</Text>
           <Text style={styles.seeAll}>Xem tất cả</Text>
@@ -183,13 +182,13 @@ export default function HomeScreen({
           </TouchableOpacity>
         </ScrollView>
 
-        {/* ================= PRODUCTS HEADER ================= */}
+        {/* PRODUCTS HEADER */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Bánh nổi bật</Text>
           <Text style={styles.seeAll}>Xem tất cả</Text>
         </View>
 
-        {/* ================= LOADING ================= */}
+        {/* LOADING */}
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#75B9C8" />
@@ -197,7 +196,7 @@ export default function HomeScreen({
           </View>
         )}
 
-        {/* ================= ERROR ================= */}
+        {/* ERROR */}
         {!loading && error !== '' && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorIcon}>{UI_EMOJI.retry}</Text>
@@ -212,7 +211,7 @@ export default function HomeScreen({
           </View>
         )}
 
-        {/* ================= EMPTY ================= */}
+        {/* EMPTY */}
         {!loading && error === '' && filteredProducts.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🍰</Text>
@@ -222,7 +221,7 @@ export default function HomeScreen({
           </View>
         )}
 
-        {/* ================= DANH SÁCH SẢN PHẨM  ================= */}
+        {/* PRODUCTS */}
         {!loading && error === '' && filteredProducts.length > 0 && (
           <View style={styles.productRow}>
             {filteredProducts.map((product) => (
@@ -231,10 +230,10 @@ export default function HomeScreen({
                 style={styles.productCard}
                 activeOpacity={0.8}
                 onPress={() => {
-                  if (onGoToProduct) onGoToProduct(product);
+                  openProduct(product);
+                  navigation.navigate('ProductDetail');
                 }}
               >
-                {/* ẢNH + NÚT TIM  */}
                 <View style={styles.productImageWrapper}>
                   <View style={styles.productImage}>
                     <Text style={styles.productEmoji}>
@@ -246,15 +245,13 @@ export default function HomeScreen({
                     style={styles.favoriteButton}
                     onPress={(e) => {
                       e.stopPropagation();
-                      if (onToggleFavorite) {
-                        onToggleFavorite({
-                          id: product.id,
-                          name: product.name,
-                          price: Number(product.price),
-                          description: product.description,
-                          category_name: product.category_name,
-                        });
-                      }
+                      toggleFavorite({
+                        id: product.id,
+                        name: product.name,
+                        price: Number(product.price),
+                        description: product.description,
+                        category_name: product.category_name,
+                      });
                     }}
                     activeOpacity={0.7}
                   >
@@ -282,14 +279,12 @@ export default function HomeScreen({
                     activeOpacity={0.7}
                     onPress={(e) => {
                       e.stopPropagation();
-                      if (onAddToCart) {
-                        onAddToCart({
-                          id: product.id,
-                          name: product.name,
-                          price: Number(product.price),
-                          emoji: getProductEmoji(product.category_name),
-                        });
-                      }
+                      addToCart({
+                        id: product.id,
+                        name: product.name,
+                        price: Number(product.price),
+                        emoji: getProductEmoji(product.category_name),
+                      });
                     }}
                   >
                     <Text style={styles.addText}>{UI_EMOJI.plus}</Text>
@@ -301,7 +296,7 @@ export default function HomeScreen({
         )}
       </ScrollView>
 
-      {/* ================= BOTTOM NAVIGATION ================= */}
+      {/* BOTTOM NAV */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
           <Text style={styles.navIcon}>{UI_EMOJI.home}</Text>
@@ -311,7 +306,7 @@ export default function HomeScreen({
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
-          onPress={onGoToFavorite}
+          onPress={() => navigation.navigate('Favorites')}
         >
           <Text style={styles.navIcon}>{UI_EMOJI.favorite}</Text>
           <Text style={styles.navText}>Yêu thích</Text>
@@ -320,7 +315,7 @@ export default function HomeScreen({
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
-          onPress={onGoToCheckout}
+          onPress={() => navigation.navigate('Cart')}
         >
           <View style={styles.cartIconWrapper}>
             <Text style={styles.navIcon}>{UI_EMOJI.cart}</Text>
@@ -340,7 +335,7 @@ export default function HomeScreen({
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.7}
-          onPress={onGoToOrders}
+          onPress={() => navigation.navigate('OrderHistory')}
         >
           <Text style={styles.navIcon}>{UI_EMOJI.order}</Text>
           <Text style={styles.navText}>Đơn hàng</Text>
@@ -568,7 +563,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  /* WRAPPER CHO ẢNH + NÚT TIM */
   productImageWrapper: {
     position: 'relative',
   },
@@ -586,7 +580,6 @@ const styles = StyleSheet.create({
     fontSize: 55,
   },
 
-  /* NÚT TIM */
   favoriteButton: {
     position: 'absolute',
     top: 6,
@@ -598,7 +591,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.12,
     shadowRadius: 3,
     elevation: 3,

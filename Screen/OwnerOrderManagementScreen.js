@@ -11,7 +11,7 @@ import {
 
 import { API_URL } from '../utils/api';
 
-export default function OwnerOrderManagementScreen({ onBack }) {
+export default function OwnerOrderManagementScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,6 @@ export default function OwnerOrderManagementScreen({ onBack }) {
     }
   };
 
-  //  XÁC NHẬN ĐÃ NHẬN TIỀN
   const confirmPayment = async (orderId) => {
     Alert.alert(
       'Xác nhận đã nhận tiền',
@@ -196,34 +195,28 @@ export default function OwnerOrderManagementScreen({ onBack }) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onBack}
+          onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          Quản lý đơn hàng
-        </Text>
+        <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
 
         <View style={styles.headerRight}>
           <View style={styles.countBadge}>
-            <Text style={styles.countText}>
-              {orders.length}
-            </Text>
+            <Text style={styles.countText}>{orders.length}</Text>
           </View>
         </View>
       </View>
 
-      {/*  ĐƠN CHỜ THANH TOÁN */}
+      {/* ALERT ĐƠN CHỜ THANH TOÁN */}
       {pendingPaymentCount > 0 && (
         <View style={styles.alertBox}>
           <Text style={styles.alertIcon}>💰</Text>
           <Text style={styles.alertText}>
             Có{' '}
-            <Text style={styles.alertBold}>
-              {pendingPaymentCount}
-            </Text>{' '}
+            <Text style={styles.alertBold}>{pendingPaymentCount}</Text>{' '}
             đơn chờ xác nhận nhận tiền
           </Text>
         </View>
@@ -275,9 +268,7 @@ export default function OwnerOrderManagementScreen({ onBack }) {
       {loading && (
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color="#75B9C8" />
-          <Text style={styles.loadingText}>
-            Đang tải đơn hàng...
-          </Text>
+          <Text style={styles.loadingText}>Đang tải đơn hàng...</Text>
         </View>
       )}
 
@@ -484,6 +475,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEF7F9',
   },
+
   backButton: {
     width: 42,
     height: 42,
@@ -494,20 +486,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
   backIcon: {
     fontSize: 30,
     color: '#438A9C',
     marginTop: -3,
   },
+
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: '#356F7C',
   },
+
   headerRight: {
     width: 42,
     alignItems: 'flex-end',
   },
+
   countBadge: {
     minWidth: 24,
     height: 24,
@@ -517,6 +513,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 7,
   },
+
   countText: {
     color: '#FFFFFF',
     fontSize: 12,
@@ -536,15 +533,18 @@ const styles = StyleSheet.create({
     borderColor: '#FFB8D0',
     gap: 8,
   },
+
   alertIcon: {
     fontSize: 18,
   },
+
   alertText: {
     flex: 1,
     fontSize: 13,
     color: '#D6336C',
     fontWeight: '600',
   },
+
   alertBold: {
     fontWeight: '800',
     fontSize: 15,
@@ -554,11 +554,13 @@ const styles = StyleSheet.create({
   filterWrapper: {
     paddingVertical: 12,
   },
+
   filterContent: {
     paddingHorizontal: 20,
     gap: 8,
     alignItems: 'center',
   },
+
   filterTab: {
     paddingHorizontal: 14,
     height: 36,
@@ -569,23 +571,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
   },
+
   filterTabActive: {
     backgroundColor: '#75B9C8',
     borderColor: '#75B9C8',
   },
+
   filterTabAlert: {
     backgroundColor: '#FFF0F5',
     borderColor: '#FFB8D0',
   },
+
   filterText: {
     fontSize: 13,
     color: '#7B9EA5',
     fontWeight: '600',
   },
+
   filterTextActive: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
+
   filterTextAlert: {
     color: '#D6336C',
     fontWeight: '800',
@@ -597,6 +604,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 30,
   },
+
   orderCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -605,67 +613,82 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D7EEF2',
     shadowColor: '#75AEB9',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
+
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+
   orderCode: {
     fontSize: 15,
     fontWeight: '800',
     color: '#438A9C',
     letterSpacing: 0.5,
   },
+
   orderDate: {
     fontSize: 11,
     color: '#89A5AA',
     marginTop: 4,
   },
+
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
   },
+
   statusText: {
     fontSize: 11,
     fontWeight: '700',
   },
+
   divider: {
     height: 1,
     backgroundColor: '#E7F2F4',
     marginVertical: 12,
   },
+
   infoRow: {
     flexDirection: 'row',
     marginBottom: 8,
   },
+
   infoLabel: {
     fontSize: 12,
     color: '#7B9EA5',
     marginRight: 6,
   },
+
   infoValue: {
     flex: 1,
     fontSize: 12,
     color: '#416F78',
     fontWeight: '600',
   },
+
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 4,
   },
+
   totalLabel: {
     fontSize: 13,
     fontWeight: '700',
     color: '#356F7C',
   },
+
   totalValue: {
     fontSize: 18,
     fontWeight: '800',
@@ -678,6 +701,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 12,
   },
+
   actionBtn: {
     flex: 1,
     height: 42,
@@ -686,46 +710,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
+
   cancelBtn: {
     backgroundColor: '#FFF0F0',
     borderWidth: 1,
     borderColor: '#FFD6D6',
     marginTop: 0,
   },
+
   cancelText: {
     color: '#D14B4B',
     fontSize: 13,
     fontWeight: '700',
   },
+
   confirmBtn: {
     backgroundColor: '#75B9C8',
     marginTop: 0,
   },
+
   confirmBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
+
   paymentBtn: {
     backgroundColor: '#D6336C',
     marginTop: 0,
   },
+
   paymentBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
+
   deliverBtn: {
     backgroundColor: '#4A6DB5',
   },
+
   deliverText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
+
   completeBtn: {
     backgroundColor: '#4D9B68',
   },
+
   completeText: {
     color: '#FFFFFF',
     fontSize: 13,
@@ -739,35 +773,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 40,
   },
+
   loadingText: {
     marginTop: 10,
     fontSize: 13,
     color: '#7D9FA7',
   },
+
   errorIcon: {
     fontSize: 40,
     marginBottom: 8,
   },
+
   errorText: {
     fontSize: 13,
     color: '#7D9FA7',
     textAlign: 'center',
     marginBottom: 16,
   },
+
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 12,
     backgroundColor: '#75B9C8',
   },
+
   retryText: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
+
   emptyIcon: {
     fontSize: 60,
     marginBottom: 12,
   },
+
   emptyText: {
     fontSize: 14,
     color: '#89A5AA',

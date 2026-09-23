@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function SplashScreen({ onFinish }) {
+export default function SplashScreen({ navigation }) {
   useEffect(() => {
     const timer = setTimeout(() => {
-      onFinish();
+      navigation.replace('Home');
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [onFinish]);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
