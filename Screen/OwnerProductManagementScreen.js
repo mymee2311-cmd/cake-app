@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   productName: { 
     fontSize: 14, 
     fontWeight: '800', 
-    Color: '#438A9C'
+    color: '#438A9C'
    },
   productDesc: { 
     fontSize: 11, 

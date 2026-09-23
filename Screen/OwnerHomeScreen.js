@@ -76,6 +76,8 @@ export default function OwnerHomeScreen({
   };
 
   const getStatusInfo = (status) => {
+     if (status === 'pending_payment')
+    return { label: '💰 Chờ nhận tiền', bg: '#FFE8F0', color: '#D6336C' };
     if (status === 'pending')
       return { label: 'Chờ xác nhận', bg: '#FFF3D8', color: '#C28A32' };
     if (status === 'confirmed')

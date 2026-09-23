@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  /* ⭐ WRAPPER CHO ẢNH + NÚT TIM */
+  /* WRAPPER CHO ẢNH + NÚT TIM */
   productImageWrapper: {
     position: 'relative',
   },
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     fontSize: 55,
   },
 
-  /* ⭐ NÚT TIM */
+  /* NÚT TIM */
   favoriteButton: {
     position: 'absolute',
     top: 6,

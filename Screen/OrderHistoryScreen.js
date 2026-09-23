@@ -65,7 +65,7 @@ export default function OrderHistoryScreen({
   const getStatusInfo = (status) => {
     if (status === 'pending_payment') {
       return {
-        label: 'Chờ shop nhận tiền',
+        label: 'Chờ shop kiểm tra',
         bg: '#FFE8F0',
         color: '#D6336C',
         icon: '💰',
@@ -126,8 +126,8 @@ export default function OrderHistoryScreen({
 
   const filters = [
     { key: 'all', label: 'Tất cả' },
-    { key: 'pending_payment', label: 'Chờ nhận tiền' },
-    { key: 'pending', label: 'Chờ xác nhận' },
+    { key: 'pending_payment', label: 'Chờ shop kiểm tra' },
+    { key: 'pending', label: 'Chờ shop xác nhận' },
     { key: 'confirmed', label: 'Đã xác nhận' },
     { key: 'delivering', label: 'Đang giao' },
     { key: 'completed', label: 'Hoàn thành' },

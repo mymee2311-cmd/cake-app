@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 
 import { API_URL } from '../utils/api';
+import AddressPicker from '../components/AddressPicker';
 
-/* ================= THÔNG TIN NGÂN HÀNG OWNER ================= */
+/* ================= THÔNG TIN NGÂN HÀNG ================= */
 const OWNER_BANK = {
   bankName: 'VietinBank',
   bankCode: 'ICB',
@@ -37,18 +38,20 @@ export default function CheckoutScreen({
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  /* ================= SĐT ================= */
+  /* ================= VALIDATE SĐT ================= */
   const isValidPhone = (p) => {
     const cleaned = (p || '').replace(/[\s\-\.]/g, '');
     return /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(cleaned);
   };
 
-  /* ================= TẠO QR  ================= */
+  /* ================= TẠO QR URL ================= */
   const getBankQrUrl = () => {
     const addInfo = encodeURIComponent('Thanh toan don hang Mee Bakery');
     return `https://img.vietqr.io/image/${OWNER_BANK.bankCode}-${OWNER_BANK.accountNumber}-compact2.png?amount=${total}&addInfo=${addInfo}&accountName=${encodeURIComponent(
@@ -78,7 +81,10 @@ export default function CheckoutScreen({
       return;
     }
     if (!address.trim()) {
-      Alert.alert('Thiếu địa chỉ', 'Vui lòng nhập địa chỉ giao hàng');
+      Alert.alert(
+        'Thiếu địa chỉ',
+        'Vui lòng chọn địa chỉ giao hàng'
+      );
       return;
     }
 
@@ -229,13 +235,35 @@ export default function CheckoutScreen({
           Địa chỉ giao hàng
         </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="VD: 74 Đại An, Văn Quán, Hà Đông, Hà Nội"
-          placeholderTextColor="#9BB8BE"
-          value={address}
-          onChangeText={setAddress}
-          multiline
+        <TouchableOpacity
+          style={[
+            styles.addressButton,
+            address && styles.addressButtonSuccess,
+          ]}
+          onPress={() => setShowAddressPicker(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.addressIcon}>📍</Text>
+          <Text
+            style={[
+              styles.addressButtonText,
+              !address && styles.addressPlaceholder,
+            ]}
+            numberOfLines={3}
+          >
+            {address || 'Nhấn để chọn địa chỉ giao hàng'}
+          </Text>
+          <Text style={styles.addressArrow}>›</Text>
+        </TouchableOpacity>
+
+        {/* MODAL CHỌN ĐỊA CHỈ */}
+        <AddressPicker
+          visible={showAddressPicker}
+          onClose={() => setShowAddressPicker(false)}
+          onConfirm={(data) => {
+            setAddress(data.fullAddress);
+            setShowAddressPicker(false);
+          }}
         />
 
         {/* PHƯƠNG THỨC THANH TOÁN */}
@@ -543,6 +571,49 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginLeft: 4,
     fontWeight: '600',
+  },
+
+  /* ================= ADDRESS PICKER  ================= */
+  addressButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 60,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#C9E8EE',
+    gap: 10,
+  },
+
+  addressButtonSuccess: {
+    borderColor: '#4D9B68',
+    borderWidth: 2,
+    backgroundColor: '#F0FBF4',
+  },
+
+  addressIcon: {
+    fontSize: 20,
+  },
+
+  addressButtonText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#3F6670',
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+
+  addressPlaceholder: {
+    color: '#9BB8BE',
+    fontWeight: '400',
+  },
+
+  addressArrow: {
+    fontSize: 22,
+    color: '#B0CFD6',
+    fontWeight: '700',
   },
 
   /* PAYMENT */
