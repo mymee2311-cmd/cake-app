@@ -18,8 +18,7 @@ import { API_URL } from '../utils/api';
 import AddressPicker from '../components/AddressPicker';
 import { useApp } from '../context/AppContext';
 
-
-{/* ================= THÔNG TIN NGÂN HÀNG ================= */}
+// ================= THÔNG TIN NGÂN HÀNG =================
 
 const OWNER_BANK = {
   bankName: 'VietinBank',
@@ -33,8 +32,7 @@ const OWNER_MOMO = {
   name: 'NGUYEN DUONG HA MY',
 };
 
-
-{/* ================= HELPERS ================= */}
+// ================= HELPERS =================
 
 const isValidPhone = (p) => {
   const cleaned = (p || '').replace(/[\s\-\.]/g, '');
@@ -45,8 +43,7 @@ const generateOrderCode = () => {
   return 'MB' + Math.floor(100000 + Math.random() * 900000);
 };
 
-
-{/* ================= API ================= */}
+// ================= API =================
 
 const createOrderApi = async (payload) => {
   const response = await fetch(`${API_URL}/api/orders`, {
@@ -64,8 +61,7 @@ const createOrderApi = async (payload) => {
   return result.data;
 };
 
-
-{/* ================= SCREEN ================= */}
+// ================= SCREEN =================
 
 export default function CheckoutScreen({ navigation }) {
   const { cart, addOrder, clearCart } = useApp();
@@ -77,14 +73,12 @@ export default function CheckoutScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [showAddressPicker, setShowAddressPicker] = useState(false);
 
-
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-
- { /* ================= MUTATION ================= */}
+  // ================= MUTATION =================
 
   const createOrderMutation = useMutation({
     mutationFn: createOrderApi,
@@ -120,8 +114,7 @@ export default function CheckoutScreen({ navigation }) {
     },
   });
 
-
-  {/* ================= QR URL ================= */}
+  // ================= QR URL =================
 
   const getBankQrUrl = () => {
     const addInfo = encodeURIComponent('Thanh toan don hang Mee Bakery');
@@ -131,8 +124,7 @@ export default function CheckoutScreen({ navigation }) {
     )}`;
   };
 
-
- { /* ================= HANDLERS ================= */}
+  // ================= HANDLERS =================
 
   const handleConfirm = () => {
     if (cart.length === 0) {
@@ -163,6 +155,38 @@ export default function CheckoutScreen({ navigation }) {
       return;
     }
 
+    const outOfStockItems = cart.filter(
+      (item) => !item.stock || item.stock <= 0
+    );
+
+    if (outOfStockItems.length > 0) {
+      Alert.alert(
+        'Không thể đặt hàng',
+        `Các sản phẩm sau đã hết hàng:\n${outOfStockItems
+          .map((i) => `• ${i.name}`)
+          .join('\n')}\n\nVui lòng quay lại giỏ hàng và xóa chúng.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
+
+    const overStockItems = cart.filter(
+      (item) => item.stock && item.quantity > item.stock
+    );
+
+    if (overStockItems.length > 0) {
+      Alert.alert(
+        'Không thể đặt hàng',
+        `Các sản phẩm sau không đủ hàng:\n${overStockItems
+          .map(
+            (i) => `• ${i.name} (còn ${i.stock}, bạn chọn ${i.quantity})`
+          )
+          .join('\n')}\n\nVui lòng quay lại giỏ hàng và giảm số lượng.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
+
     const orderCode = generateOrderCode();
 
     const items = cart.map((item) => ({
@@ -183,11 +207,9 @@ export default function CheckoutScreen({ navigation }) {
     });
   };
 
-
   const submitting = createOrderMutation.isPending;
 
-
-  {/* ================= RENDER CART ================= */}
+  // ================= RENDER CART =================
 
   const renderCartItems = () => {
     if (cart.length === 0) {
@@ -196,7 +218,6 @@ export default function CheckoutScreen({ navigation }) {
 
     return cart.map((item, i) => (
       <View key={i} style={styles.itemRow}>
-
         <Text style={styles.itemName}>
           {item.name} x {item.quantity}
         </Text>
@@ -204,27 +225,22 @@ export default function CheckoutScreen({ navigation }) {
         <Text style={styles.itemPrice}>
           {(item.price * item.quantity).toLocaleString('vi-VN')}đ
         </Text>
-
       </View>
     ));
   };
 
-
- {/* ================= RENDER ================= */}
+  // ================= RENDER =================
 
   return (
     <View style={styles.container}>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-
         {/* ============ HEADER ============ */}
 
         <View style={styles.header}>
-
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -232,14 +248,10 @@ export default function CheckoutScreen({ navigation }) {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
 
-
           <Text style={styles.headerTitle}>Thanh toán</Text>
 
-
           <View style={{ width: 42 }} />
-
         </View>
-
 
         {/* ============ ĐƠN HÀNG ============ */}
 
@@ -247,11 +259,9 @@ export default function CheckoutScreen({ navigation }) {
 
         <View style={styles.card}>{renderCartItems()}</View>
 
-
         {/* ============ THÔNG TIN NGƯỜI NHẬN ============ */}
 
         <Text style={styles.sectionTitle}>Thông tin người nhận</Text>
-
 
         <TextInput
           style={styles.input}
@@ -260,7 +270,6 @@ export default function CheckoutScreen({ navigation }) {
           value={name}
           onChangeText={setName}
         />
-
 
         <TextInput
           style={[
@@ -277,13 +286,11 @@ export default function CheckoutScreen({ navigation }) {
           maxLength={15}
         />
 
-
         {phone.trim().length > 0 && !isValidPhone(phone) && (
           <Text style={styles.errorHint}>
             ⚠️ SĐT không hợp lệ (cần 10 số, bắt đầu 03/05/07/08/09)
           </Text>
         )}
-
 
         {phone.trim().length > 0 && isValidPhone(phone) && (
           <Text style={styles.successHint}>
@@ -291,11 +298,9 @@ export default function CheckoutScreen({ navigation }) {
           </Text>
         )}
 
-
         {/* ============ ĐỊA CHỈ ============ */}
 
         <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
-
 
         <TouchableOpacity
           style={[
@@ -305,7 +310,6 @@ export default function CheckoutScreen({ navigation }) {
           onPress={() => setShowAddressPicker(true)}
           activeOpacity={0.8}
         >
-
           <Text style={styles.addressIcon}>📍</Text>
 
           <Text
@@ -319,9 +323,7 @@ export default function CheckoutScreen({ navigation }) {
           </Text>
 
           <Text style={styles.addressArrow}>›</Text>
-
         </TouchableOpacity>
-
 
         <AddressPicker
           visible={showAddressPicker}
@@ -332,13 +334,11 @@ export default function CheckoutScreen({ navigation }) {
           }}
         />
 
-
         {/* ============ PHƯƠNG THỨC THANH TOÁN ============ */}
 
         <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
 
         <View style={styles.card}>
-
           <TouchableOpacity
             style={styles.methodRow}
             onPress={() => setPaymentMethod('cash')}
@@ -350,9 +350,7 @@ export default function CheckoutScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-
           <View style={styles.divider} />
-
 
           <TouchableOpacity
             style={styles.methodRow}
@@ -365,9 +363,7 @@ export default function CheckoutScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-
           <View style={styles.divider} />
-
 
           <TouchableOpacity
             style={styles.methodRow}
@@ -379,19 +375,15 @@ export default function CheckoutScreen({ navigation }) {
               {paymentMethod === 'momo' ? '●' : '○'}
             </Text>
           </TouchableOpacity>
-
         </View>
-
 
         {/* ============ QR CHUYỂN KHOẢN ============ */}
 
         {paymentMethod === 'bank' && (
           <View style={styles.qrBox}>
-
             <Text style={styles.qrTitle}>
               🏦 Quét mã để chuyển khoản
             </Text>
-
 
             <Image
               source={{ uri: getBankQrUrl() }}
@@ -399,16 +391,13 @@ export default function CheckoutScreen({ navigation }) {
               resizeMode="contain"
             />
 
-
             <View style={styles.bankInfo}>
-
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Ngân hàng:</Text>
                 <Text style={styles.bankValue}>
                   {OWNER_BANK.bankName}
                 </Text>
               </View>
-
 
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Số TK:</Text>
@@ -417,7 +406,6 @@ export default function CheckoutScreen({ navigation }) {
                 </Text>
               </View>
 
-
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Chủ TK:</Text>
                 <Text style={styles.bankValue}>
@@ -425,37 +413,29 @@ export default function CheckoutScreen({ navigation }) {
                 </Text>
               </View>
 
-
               <View style={styles.bankRow}>
                 <Text style={styles.bankLabel}>Số tiền:</Text>
                 <Text style={styles.bankAmount}>
                   {total.toLocaleString('vi-VN')}đ
                 </Text>
               </View>
-
             </View>
-
 
             <Text style={styles.qrHint}>
               💡 Mở app ngân hàng → Quét mã → Kiểm tra số tiền → Xác nhận
             </Text>
-
           </View>
         )}
-
 
         {/* ============ MOMO ============ */}
 
         {paymentMethod === 'momo' && (
           <View style={styles.qrBox}>
-
             <Text style={styles.qrTitle}>
               📱 Thanh toán qua Momo
             </Text>
 
-
             <View style={styles.momoInfo}>
-
               <Text style={styles.momoText}>Mở app Momo</Text>
 
               <Text style={styles.momoText}>
@@ -477,36 +457,28 @@ export default function CheckoutScreen({ navigation }) {
               <Text style={styles.momoText}>
                 → Nội dung: Thanh toan don hang
               </Text>
-
             </View>
-
 
             <Text style={styles.qrHint}>
               💡 Sau khi chuyển khoản, nhấn "Xác nhận thanh toán"
             </Text>
-
           </View>
         )}
-
 
         {/* ============ TỔNG TIỀN ============ */}
 
         <View style={styles.totalRow}>
-
           <Text style={styles.totalLabel}>Tổng tiền</Text>
 
           <Text style={styles.totalValue}>
             {total.toLocaleString('vi-VN')}đ
           </Text>
-
         </View>
-
 
         {/* ============ CẢNH BÁO ============ */}
 
         {paymentMethod !== 'cash' && (
           <View style={styles.warningBox}>
-
             <Text style={styles.warningIcon}>⚠️</Text>
 
             <Text style={styles.warningText}>
@@ -517,10 +489,8 @@ export default function CheckoutScreen({ navigation }) {
               .{'\n'}
               Shop sẽ kiểm tra và xác nhận trong vài phút.
             </Text>
-
           </View>
         )}
-
 
         {/* ============ NÚT XÁC NHẬN ============ */}
 
@@ -543,18 +513,14 @@ export default function CheckoutScreen({ navigation }) {
             </Text>
           )}
         </TouchableOpacity>
-
       </ScrollView>
-
     </View>
   );
 }
 
-
-/* ================= STYLES ================= */
+// ================= STYLES =================
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#EAF8FB',
@@ -565,8 +531,7 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
 
-
-  /* ============ HEADER ============ */
+  // ============ HEADER ============
 
   header: {
     height: 65,
@@ -599,8 +564,7 @@ const styles = StyleSheet.create({
     color: '#356F7C',
   },
 
-
-  /* ============ COMMON ============ */
+  // ============ COMMON ============
 
   sectionTitle: {
     fontSize: 16,
@@ -623,8 +587,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E7F2F4',
   },
 
-
-  /* ============ CART ============ */
+  // ============ CART ============
 
   emptyText: {
     color: '#89A5AA',
@@ -651,8 +614,7 @@ const styles = StyleSheet.create({
     color: '#438A9C',
   },
 
-
-  /* ============ INPUT ============ */
+  // ============ INPUT ============
 
   input: {
     minHeight: 52,
@@ -694,8 +656,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-
-  /* ============ ADDRESS ============ */
+  // ============ ADDRESS ============
 
   addressButton: {
     flexDirection: 'row',
@@ -739,8 +700,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-
-  /* ============ PAYMENT METHOD ============ */
+  // ============ PAYMENT METHOD ============
 
   methodRow: {
     flexDirection: 'row',
@@ -759,8 +719,7 @@ const styles = StyleSheet.create({
     color: '#438A9C',
   },
 
-
-  /* ============ QR BOX ============ */
+  // ============ QR BOX ============
 
   qrBox: {
     marginTop: 14,
@@ -801,8 +760,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
 
-
-  /* ============ BANK INFO ============ */
+  // ============ BANK INFO ============
 
   bankInfo: {
     width: '100%',
@@ -842,8 +800,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 
-
-  /* ============ MOMO INFO ============ */
+  // ============ MOMO INFO ============
 
   momoInfo: {
     width: '100%',
@@ -871,8 +828,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-
-  /* ============ WARNING ============ */
+  // ============ WARNING ============
 
   warningBox: {
     flexDirection: 'row',
@@ -901,8 +857,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-
-  /* ============ TOTAL + CONFIRM ============ */
+  // ============ TOTAL + CONFIRM ============
 
   totalRow: {
     flexDirection: 'row',
@@ -943,5 +898,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-
 });

@@ -210,57 +210,136 @@ app.post('/api/orders', (req, res) => {
   const initialStatus =
     payment_method === 'cash' ? 'pending' : 'pending_payment';
 
-  const orderSql = `
-    INSERT INTO orders 
-      (order_code, customer_name, customer_phone, address, payment_method, total, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  const orderValues = [
-    order_code,
-    customer_name || 'Khách',
-    customer_phone || '',
-    address || '',
-    payment_method || 'cash',
-    Number(total) || 0,
-    initialStatus,
-  ];
-
-  db.query(orderSql, orderValues, (err, result) => {
+  db.beginTransaction((err) => {
     if (err) {
-      console.error('Lỗi tạo đơn hàng:', err.message);
       return res.status(500).json({ success: false, error: err.message });
     }
 
-    const orderId = result.insertId;
+    const productIds = items.filter((i) => i.id).map((i) => i.id);
 
-    const itemSql = `
-      INSERT INTO order_items 
-        (order_id, product_id, product_name, price, quantity)
-      VALUES ?
+    if (productIds.length === 0) {
+      return createOrder();
+    }
+
+    const checkSql = `
+      SELECT product_id, product_name, stock 
+      FROM products 
+      WHERE product_id IN (?)
     `;
 
-    const itemValues = items.map((item) => [
-      orderId,
-      item.id || null,
-      item.name,
-      Number(item.price),
-      Number(item.quantity),
-    ]);
-
-    db.query(itemSql, [itemValues], (err2) => {
-      if (err2) {
-        console.error('Lỗi thêm order_items:', err2.message);
-        return res.status(500).json({ success: false, error: err2.message });
+    db.query(checkSql, [productIds], (err, products) => {
+      if (err) {
+        return db.rollback(() => {
+          res.status(500).json({ success: false, error: err.message });
+        });
       }
 
-      console.log('Đã tạo đơn hàng, ID =', orderId, '| Status =', initialStatus);
-      res.json({
-        success: true,
-        message: 'Đặt hàng thành công',
-        data: { order_id: orderId, order_code, status: initialStatus },
-      });
+      for (const item of items) {
+        if (!item.id) continue;
+        const product = products.find((p) => p.product_id === item.id);
+        if (!product) {
+          return db.rollback(() => {
+            res.status(400).json({
+              success: false,
+              error: `Sản phẩm ID ${item.id} không tồn tại`,
+            });
+          });
+        }
+        if (product.stock < item.quantity) {
+          return db.rollback(() => {
+            res.status(400).json({
+              success: false,
+              error: `Sản phẩm "${product.product_name}" chỉ còn ${product.stock} trong kho`,
+            });
+          });
+        }
+      }
+
+      createOrder();
     });
+
+    function createOrder() {
+      const orderSql = `
+        INSERT INTO orders 
+          (order_code, customer_name, customer_phone, address, payment_method, total, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+      const orderValues = [
+        order_code,
+        customer_name || 'Khách',
+        customer_phone || '',
+        address || '',
+        payment_method || 'cash',
+        Number(total) || 0,
+        initialStatus,
+      ];
+
+      db.query(orderSql, orderValues, (err, result) => {
+        if (err) {
+          return db.rollback(() => {
+            res.status(500).json({ success: false, error: err.message });
+          });
+        }
+
+        const orderId = result.insertId;
+
+        const itemSql = `
+          INSERT INTO order_items 
+            (order_id, product_id, product_name, price, quantity)
+          VALUES ?
+        `;
+        const itemValues = items.map((item) => [
+          orderId,
+          item.id || null,
+          item.name,
+          Number(item.price),
+          Number(item.quantity),
+        ]);
+
+        db.query(itemSql, [itemValues], (err2) => {
+          if (err2) {
+            return db.rollback(() => {
+              res.status(500).json({ success: false, error: err2.message });
+            });
+          }
+
+          const stockUpdates = items
+            .filter((item) => item.id)
+            .map((item) => {
+              return new Promise((resolve, reject) => {
+                db.query(
+                  'UPDATE products SET stock = stock - ? WHERE product_id = ?',
+                  [Number(item.quantity), item.id],
+                  (err3) => (err3 ? reject(err3) : resolve())
+                );
+              });
+            });
+
+          Promise.all(stockUpdates)
+            .then(() => {
+              db.commit((err4) => {
+                if (err4) {
+                  return db.rollback(() => {
+                    res.status(500).json({ success: false, error: err4.message });
+                  });
+                }
+
+                console.log('Đã tạo đơn hàng, ID =', orderId);
+                res.json({
+                  success: true,
+                  message: 'Đặt hàng thành công',
+                  data: { order_id: orderId, order_code, status: initialStatus },
+                });
+              });
+            })
+            .catch((err5) => {
+              db.rollback(() => {
+                res.status(500).json({ success: false, error: err5.message });
+              });
+            });
+        });
+      });
+    }
   });
 });
 
@@ -322,26 +401,119 @@ app.put('/api/orders/:id/status', (req, res) => {
   const { status } = req.body;
 
   const allowed = [
-    'pending',
-    'pending_payment',
-    'confirmed',
-    'delivering',
-    'completed',
-    'cancelled',
+    'pending', 'pending_payment', 'confirmed',
+    'delivering', 'completed', 'cancelled',
   ];
 
   if (!allowed.includes(status)) {
     return res.status(400).json({ success: false, error: 'Trạng thái không hợp lệ' });
   }
 
-  const sql = `UPDATE orders SET status = ? WHERE order_id = ?`;
-
-  db.query(sql, [status, orderId], (err) => {
+  db.beginTransaction((err) => {
     if (err) {
-      console.error('Lỗi cập nhật đơn:', err.message);
       return res.status(500).json({ success: false, error: err.message });
     }
-    res.json({ success: true, message: 'Đã cập nhật trạng thái' });
+
+
+    db.query(
+      'SELECT status FROM orders WHERE order_id = ?',
+      [orderId],
+      (err, orders) => {
+        if (err) {
+          return db.rollback(() => {
+            res.status(500).json({ success: false, error: err.message });
+          });
+        }
+
+        if (orders.length === 0) {
+          return db.rollback(() => {
+            res.status(404).json({ success: false, error: 'Không tìm thấy đơn' });
+          });
+        }
+
+        const currentStatus = orders[0].status;
+
+        if (status === 'cancelled' && currentStatus === 'completed') {
+          return db.rollback(() => {
+            res.status(400).json({
+              success: false,
+              error: 'Không thể hủy đơn đã hoàn thành',
+            });
+          });
+        }
+
+        const shouldRestoreStock =
+          status === 'cancelled' && currentStatus !== 'cancelled';
+
+        db.query(
+          'UPDATE orders SET status = ? WHERE order_id = ?',
+          [status, orderId],
+          (err2) => {
+            if (err2) {
+              return db.rollback(() => {
+                res.status(500).json({ success: false, error: err2.message });
+              });
+            }
+
+            if (shouldRestoreStock) {
+              db.query(
+                'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
+                [orderId],
+                (err3, items) => {
+                  if (err3) {
+                    return db.rollback(() => {
+                      res.status(500).json({ success: false, error: err3.message });
+                    });
+                  }
+
+                  const restorePromises = items
+                    .filter((item) => item.product_id)
+                    .map((item) => {
+                      return new Promise((resolve, reject) => {
+                        db.query(
+                          'UPDATE products SET stock = stock + ? WHERE product_id = ?',
+                          [item.quantity, item.product_id],
+                          (err4) => (err4 ? reject(err4) : resolve())
+                        );
+                      });
+                    });
+
+                  Promise.all(restorePromises)
+                    .then(() => {
+                      db.commit((err5) => {
+                        if (err5) {
+                          return db.rollback(() => {
+                            res.status(500).json({ success: false, error: err5.message });
+                          });
+                        }
+                        console.log('Đã hủy đơn và hoàn kho, ID =', orderId);
+                        res.json({
+                          success: true,
+                          message: 'Đã hủy đơn và hoàn lại kho',
+                        });
+                      });
+                    })
+                    .catch((err6) => {
+                      db.rollback(() => {
+                        res.status(500).json({ success: false, error: err6.message });
+                      });
+                    });
+                }
+              );
+            } else {
+              db.commit((err3) => {
+                if (err3) {
+                  return db.rollback(() => {
+                    res.status(500).json({ success: false, error: err3.message });
+                  });
+                }
+                res.json({ success: true, message: 'Đã cập nhật trạng thái' });
+              });
+            }
+          }
+        );
+      }
+    );
   });
 });
 
@@ -462,4 +634,4 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server đang chạy trên port ${PORT}`);
-}); ``
+});

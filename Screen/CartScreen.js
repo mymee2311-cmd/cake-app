@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,10 @@ import {
 
 import { formatPrice, UI_EMOJI } from '../utils/emoji';
 import { useApp } from '../context/AppContext';
+import { API_URL } from '../utils/api'; 
 
 export default function CartScreen({ navigation }) {
-  const { cart, updateQuantity, removeItem } = useApp();
+  const { cart, updateQuantity, removeItem, setCart } = useApp();
 
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -23,9 +24,41 @@ export default function CartScreen({ navigation }) {
     (sum, item) => sum + item.quantity,
     0
   );
+  useEffect(() => {
+    const refreshStock = async () => {
+      if (cart.length === 0) return;
+      try {
+        const response = await fetch(`${API_URL}/api/products`); 
+        const result = await response.json();
+        const latestProducts = result.data || result;
+
+        setCart((prevCart) =>
+          prevCart.map((item) => {
+            const latest = latestProducts.find((p) => p.id === item.id);
+            if (latest) {
+              return { ...item, stock: Number(latest.stock || 0) };
+            }
+            return item;
+          })
+        );
+      } catch (error) {
+        console.log('Lỗi cập nhật stock:', error.message);
+      }
+    };
+
+    refreshStock();
+  }, []);
 
   /* ============ XỬ LÝ ============= */
   const handleIncrease = (item) => {
+    if (item.stock && item.quantity >= item.stock) {
+      Alert.alert(
+        'Đã đạt giới hạn',
+        `Sản phẩm "${item.name}" chỉ còn ${item.stock} trong kho.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
     updateQuantity(item.id, item.quantity + 1);
   };
 
@@ -50,6 +83,42 @@ export default function CartScreen({ navigation }) {
         },
       ]
     );
+  };
+
+  const handleCheckout = () => {
+    const outOfStockItems = cart.filter(
+      (item) => !item.stock || item.stock <= 0
+    );
+
+    if (outOfStockItems.length > 0) {
+      Alert.alert(
+        'Không thể thanh toán',
+        `Các sản phẩm sau đã hết hàng:\n${outOfStockItems
+          .map((i) => `• ${i.name}`)
+          .join('\n')}\n\nVui lòng xóa chúng khỏi giỏ hàng.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
+
+    const overStockItems = cart.filter(
+      (item) => item.stock && item.quantity > item.stock
+    );
+
+    if (overStockItems.length > 0) {
+      Alert.alert(
+        'Không thể thanh toán',
+        `Các sản phẩm sau không đủ hàng:\n${overStockItems
+          .map(
+            (i) => `• ${i.name} (còn ${i.stock}, bạn chọn ${i.quantity})`
+          )
+          .join('\n')}\n\nVui lòng giảm số lượng.`,
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
+
+    navigation.navigate('Checkout');
   };
 
   /* ============ HEADER ============ */
@@ -112,72 +181,98 @@ export default function CartScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         >
-          {cart.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              {/* PRODUCT IMAGE */}
-              <View style={styles.itemImage}>
-                <Text style={styles.itemEmoji}>
-                  {item.emoji || UI_EMOJI.cake}
-                </Text>
-              </View>
+          {cart.map((item) => {
+            const isOutOfStock = !item.stock || item.stock <= 0;
+            const isOverStock = item.stock && item.quantity > item.stock;
 
-              {/* PRODUCT INFO */}
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName} numberOfLines={1}>
-                  {item.name}
-                </Text>
+            return (
+              <View
+                key={item.id}
+                style={[
+                  styles.itemCard,
+                  isOutOfStock && styles.itemCardOutOfStock,
+                ]}
+              >
+            
+                <View style={styles.itemImage}>
+                  <Text style={styles.itemEmoji}>
+                    {item.emoji || UI_EMOJI.cake}
+                  </Text>
+                </View>
 
-                <Text style={styles.itemPrice}>
-                  {formatPrice(item.price)}
-                </Text>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
 
-                <View style={styles.quantityRow}>
+                  <Text style={styles.itemPrice}>
+                    {formatPrice(item.price)}
+                  </Text>
+
+                  {isOutOfStock && (
+                    <Text style={styles.outOfStockWarning}>
+                      ⚠️ Sản phẩm đã hết hàng
+                    </Text>
+                  )}
+                  {isOverStock && !isOutOfStock && (
+                    <Text style={styles.outOfStockWarning}>
+                      ⚠️ Chỉ còn {item.stock} trong kho
+                    </Text>
+                  )}
+
+                  <View style={styles.quantityRow}>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => handleDecrease(item)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.quantityButtonText}>
+                        {UI_EMOJI.minus}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <Text style={styles.quantityValue}>
+                      {item.quantity}
+                    </Text>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.quantityButton,
+                        (isOutOfStock || item.quantity >= item.stock) &&
+                          styles.quantityButtonDisabled,
+                      ]}
+                      onPress={() => handleIncrease(item)}
+                      disabled={isOutOfStock || item.quantity >= item.stock}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.quantityButtonText}>
+                        {UI_EMOJI.plus}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.itemRight}>
                   <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => handleDecrease(item)}
+                    style={styles.removeButton}
+                    onPress={() => handleRemove(item)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.quantityButtonText}>
-                      {UI_EMOJI.minus}
+                    <Text style={styles.removeIcon}>
+                      {UI_EMOJI.trash}
                     </Text>
                   </TouchableOpacity>
 
-                  <Text style={styles.quantityValue}>{item.quantity}</Text>
-
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => handleIncrease(item)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.quantityButtonText}>
-                      {UI_EMOJI.plus}
-                    </Text>
-                  </TouchableOpacity>
+                  <Text style={styles.subtotal}>
+                    {formatPrice(item.price * item.quantity)}
+                  </Text>
                 </View>
               </View>
-
-              {/* REMOVE + SUBTOTAL */}
-              <View style={styles.itemRight}>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemove(item)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.removeIcon}>
-                    {UI_EMOJI.trash}
-                  </Text>
-                </TouchableOpacity>
-
-                <Text style={styles.subtotal}>
-                  {formatPrice(item.price * item.quantity)}
-                </Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       </View>
 
-      {/* BOTTOM SUMMARY */}
       <View style={styles.bottomBar}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>
@@ -200,7 +295,7 @@ export default function CartScreen({ navigation }) {
 
         <TouchableOpacity
           style={styles.checkoutButton}
-          onPress={() => navigation.navigate('Checkout')}
+          onPress={handleCheckout}
           activeOpacity={0.8}
         >
           <Text style={styles.checkoutText}>Tiến hành thanh toán</Text>
@@ -210,7 +305,6 @@ export default function CartScreen({ navigation }) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -294,13 +388,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DDEFF3',
     shadowColor: '#75AEB9',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 5,
     elevation: 2,
+  },
+
+  itemCardOutOfStock: {
+    borderColor: '#FFB3B3',
+    backgroundColor: '#FFF8F8',
   },
 
   itemImage: {
@@ -334,6 +430,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  outOfStockWarning: {
+    fontSize: 11,
+    color: '#FF5A5F',
+    fontWeight: '700',
+    marginTop: 4,
+  },
+
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -347,6 +450,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F7FA',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  quantityButtonDisabled: {
+    opacity: 0.4,
   },
 
   quantityButtonText: {
@@ -422,10 +529,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#75B9C8',
     borderRadius: 14,
     shadowColor: '#5A9EAD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -447,10 +551,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#E7F2F4',
     shadowColor: '#75AEB9',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
@@ -501,10 +602,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 14,
     shadowColor: '#5A9EAD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,

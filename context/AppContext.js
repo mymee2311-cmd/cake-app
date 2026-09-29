@@ -22,17 +22,30 @@ export function AppProvider({ children }) {
   const addToCart = (product) => {
     setCart((prev) => {
       const found = prev.find((p) => p.id === product.id);
+      const productStock = Number(product.stock || 0);
 
       if (found) {
-        return prev.map((p) => {
-          if (p.id === product.id) {
-            return { ...p, quantity: p.quantity + 1 };
-          }
-          return p;
-        });
-      }
+        const newQuantity = found.quantity + 1;
+        if (newQuantity > productStock) {
+          return prev.map((p) =>
+            p.id === product.id ? { ...p, stock: productStock } : p
+          );
+        }
 
-      return [...prev, { ...product, quantity: 1 }];
+        return prev.map((p) =>
+          p.id === product.id
+            ? { ...p, quantity: newQuantity, stock: productStock }
+            : p
+        );
+      }
+      return [
+        ...prev,
+        {
+          ...product,
+          quantity: 1,
+          stock: productStock,
+        },
+      ];
     });
   };
 
@@ -93,6 +106,7 @@ export function AppProvider({ children }) {
     setUserInfo,
     setLastOrder,
     setProductRefreshKey,
+    setCart, 
 
     addToCart,
     updateQuantity,

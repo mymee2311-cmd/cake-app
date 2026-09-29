@@ -81,6 +81,7 @@ export default function ProductDetailScreen({ navigation }) {
         name: product.name,
         price: Number(product.price),
         emoji: getProductEmoji(product.category_name),
+        stock: Number(product.stock), 
       });
     }
 
@@ -297,7 +298,6 @@ export default function ProductDetailScreen({ navigation }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -391,10 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 4,
@@ -585,10 +582,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E7F2F4',
     shadowColor: '#75AEB9',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
@@ -618,10 +612,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#5A9EAD',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
