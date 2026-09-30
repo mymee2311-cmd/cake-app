@@ -28,7 +28,7 @@ public class OrderService {
     private ProductRepository productRepo;
 
     @Transactional
-    @SuppressWarnings("uncheked")
+    @SuppressWarnings("unchecked")
     public Order createOrder(Map<String, Object> payload) {
         List<Map<String, Object>> items =
             (List<Map<String, Object>>) payload.get("items");
