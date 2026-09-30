@@ -62,42 +62,19 @@ export default function Login() {
 
         <Form layout="vertical" onFinish={handleLogin} size="large">
           <Form.Item
-  name="phone"
-  label="Số điện thoại"
-  rules={[
-    { required: true, message: 'Vui lòng nhập SĐT' },
-    {
-      validator: (_, value) => {
-        if (!value) return Promise.resolve();
+            name="phone"
+            label="Số điện thoại"
+            rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
+          >
+            <Input prefix={<UserOutlined />} placeholder="Nhập số điện thoại" />
+          </Form.Item>
 
-        const cleaned = value.replace(/[\s\-\.]/g, '');
-        const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
-
-        if (!phoneRegex.test(cleaned)) {
-          return Promise.reject(
-            new Error(
-              'SĐT không hợp lệ (10 số, bắt đầu 03/05/07/08/09)'
-            )
-          );
-        }
-
-        return Promise.resolve();
-      },
-    },
-  ]}
->
-  <Input
-    prefix={<UserOutlined />}
-    placeholder="0901234567"
-    maxLength={11}
-  />
-</Form.Item>
           <Form.Item
             name="password"
             label="Mật khẩu"
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Nhập mật khẩu" />
           </Form.Item>
 
           <Form.Item>
@@ -107,7 +84,7 @@ export default function Login() {
               loading={loading}
               block
               icon={<ShopOutlined />}
-              style={{ height: 48, fontWeight: 700 }}
+              style={{ background: '#438A9C', borderColor: '#438A9C' }}
             >
               Đăng nhập
             </Button>
@@ -115,7 +92,7 @@ export default function Login() {
         </Form>
 
         <div style={{ textAlign: 'center', color: '#89A5AA', fontSize: 12 }}>
-          Demo: nhập bất kỳ SĐT + mật khẩu để vào
+          Demo: nhập bất kỳ số điện thoại và mật khẩu
         </div>
       </Card>
     </div>
